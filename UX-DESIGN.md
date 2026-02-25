@@ -9,11 +9,11 @@ This repository contains instructions and files for two assignments that togethe
 
 ## Milely Application Wireframe
 
-# Mobile View:
+### Mobile View:
 
 ![MobileView](./ux-design/MobileWireframePrototype)
 
-# Desktop View:
+### Desktop View:
 ![DesktopView](./ux-design/DesktopWireframePrototype)
 
 ## Milely App Map
