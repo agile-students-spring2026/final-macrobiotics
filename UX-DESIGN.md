@@ -6,10 +6,10 @@ This repository contains instructions and files for two assignments that togethe
 
 # Mobile View:
 
-![MobileView](./ux-design/MobileWireframePrototype.png)
+![MobileView](./ux-design/MobileWireframePrototype)
 
 # Desktop View
-![DesktopView](./ux-design/DesktopWireframePrototype.png)
+![DesktopView](./ux-design/DesktopWireframePrototype)
 
 Replace the contents of this file with the completed assignments, as described in:
 
