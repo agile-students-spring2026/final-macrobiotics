@@ -4,12 +4,12 @@ This repository contains instructions and files for two assignments that togethe
 
 ## Milely Application Wireframe and Prototype
 
-#Mobile View:
+# Mobile View:
 
-![Screenshot1](/ux-design/MobileWireframe+Prototype.png)
+![MobileView](./ux-design/MobileWireframePrototype.png)
 
-#Desktop View
-![Screenshot2](/ux-design/Wireframe+Prototype.png)
+# Desktop View
+![DesktopView](./ux-design/DesktopWireframePrototype.png)
 
 Replace the contents of this file with the completed assignments, as described in:
 
