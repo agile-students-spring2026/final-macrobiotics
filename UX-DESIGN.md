@@ -19,8 +19,3 @@ This repository contains instructions and files for two assignments that togethe
 ## Milely App Map
 
 ![AppMap](./ux-design/appmap.png)
-
-Replace the contents of this file with the completed assignments, as described in:
-
-- [app map & wireframe instructions](instructions-0a-app-map-wireframes.md).
-- [prototype instructions](instructions-0b-prototyping.md)
