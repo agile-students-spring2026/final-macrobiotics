@@ -1,0 +1,153 @@
+.ticket-container {
+  width: 100%;
+  max-width: 29.4rem;
+  background: #ffffff;
+  border: 1px solid var(--panel-line);
+  border-radius: 0.7rem;
+  padding: 1rem 1.4rem;
+  color: var(--text);
+  box-shadow: 0 3px 5px -1px rgba(0, 0, 0, 0.05);
+  box-sizing: border-box;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease,
+    border-color 0.2s ease;
+  cursor: pointer;
+}
+
+.ticket-container:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 7px 10px -2px rgba(0, 0, 0, 0.08);
+  border-color: #b2bbc7;
+}
+
+.ticket-top-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.4rem;
+}
+
+.flight-info {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+}
+
+.time {
+  font-family: "Outfit", sans-serif;
+  font-size: 1rem;
+  font-weight: 500;
+  color: var(--muted);
+}
+
+.airport {
+  font-family: "Sora", sans-serif;
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--text);
+  line-height: 1;
+}
+
+.duration-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 1;
+  margin: 0 1.4rem;
+  position: relative;
+  top: -3px;
+}
+
+.duration-text {
+  font-family: "Outfit", sans-serif;
+  font-size: 0.7rem;
+  font-weight: 500;
+  color: var(--muted);
+  margin-bottom: 0.3rem;
+}
+
+.arrow-line-container {
+  position: relative;
+  width: 100%;
+  display: flex;
+  align-items: center;
+}
+
+.arrow-line {
+  height: 1.5px;
+  background-color: var(--panel-line);
+  width: 100%;
+  border-radius: 2px;
+}
+
+.arrow-head {
+  position: absolute;
+  right: -3px;
+  display: flex;
+}
+
+.arrow-head svg {
+  stroke: var(--panel-line);
+  width: 12px;
+  height: 12px;
+}
+
+.ticket-bottom-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 1rem;
+  border-top: 1px dashed var(--panel-line);
+}
+
+.airline-info {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+}
+
+.logo-placeholder {
+  width: 2.5rem;
+  height: 2.5rem;
+  background-color: var(--accent-soft);
+  border: 1px solid var(--panel-line);
+  border-radius: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.airline-logo {
+  font-family: "Outfit", sans-serif;
+  font-size: 8px;
+  font-weight: 600;
+  color: var(--accent);
+  text-transform: uppercase;
+  text-align: center;
+  line-height: 1.2;
+}
+
+.flight-number {
+  font-family: "Sora", sans-serif;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text);
+  letter-spacing: 0.02em;
+}
+
+.miles-container {
+  background-color: var(--accent-soft);
+  color: var(--accent);
+  padding: 0.35rem 0.85rem;
+  border-radius: 999px;
+  border: 1px solid rgba(31, 106, 165, 0.2);
+}
+
+.miles-cost {
+  font-family: "Sora", sans-serif;
+  font-size: 0.9rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
