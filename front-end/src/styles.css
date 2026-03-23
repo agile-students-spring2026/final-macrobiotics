@@ -147,6 +147,7 @@ body {
 
 .settings-action-button,
 .settings-toggle-button,
+.account-detail-button,
 .preference-button,
 .preference-edit-button,
 .preferences-edit-all-button {
@@ -171,12 +172,41 @@ body {
   font-weight: 600;
 }
 
+.settings-action-button.is-open {
+  border-color: #6a97bf;
+  background: #e4edf7;
+}
+
 .settings-action-button:hover,
 .settings-toggle-button:hover,
+.account-detail-button:hover,
 .preference-button:hover,
 .preference-edit-button:hover,
 .preferences-edit-all-button:hover {
   transform: translateY(-1px);
+}
+
+.account-action-group {
+  display: grid;
+  gap: 0.65rem;
+}
+
+.account-action-panel {
+  display: grid;
+  gap: 0.65rem;
+  padding: 0.85rem;
+  border: 1px solid #d8e1eb;
+  border-radius: 0.9rem;
+  background: rgba(255, 255, 255, 0.78);
+}
+
+.account-detail-button {
+  padding: 0.85rem 0.95rem;
+  background: #f4f8fb;
+  border-color: #d3dfeb;
+  text-align: left;
+  color: var(--text);
+  font-weight: 600;
 }
 
 .settings-toggle-button {

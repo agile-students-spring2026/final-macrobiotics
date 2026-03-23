@@ -9,6 +9,7 @@ const DEFAULT_PREFERENCES = [
 function SettingsPage() {
   const [showDefaultPreferences, setShowDefaultPreferences] = useState(false);
   const [activePreference, setActivePreference] = useState(null);
+  const [activeAccountAction, setActiveAccountAction] = useState(null);
 
   const handleToggleDefaultPreferences = () => {
     setShowDefaultPreferences((current) => {
@@ -26,6 +27,12 @@ function SettingsPage() {
     );
   };
 
+  const handleAccountActionClick = (actionType) => {
+    setActiveAccountAction((current) =>
+      current === actionType ? null : actionType
+    );
+  };
+
   return (
     <section className="screen">
       <h2>Settings Screen</h2>
@@ -34,12 +41,51 @@ function SettingsPage() {
       <div className="settings-grid">
         <div className="settings-card">
           <h3>Account</h3>
-          <button className="settings-action-button" type="button">
-            Change Email
-          </button>
-          <button className="settings-action-button" type="button">
-            Change Password
-          </button>
+          <div className="account-action-group">
+            <button
+              className={`settings-action-button${
+                activeAccountAction === "email" ? " is-open" : ""
+              }`}
+              type="button"
+              onClick={() => handleAccountActionClick("email")}
+            >
+              Change Email
+            </button>
+
+            {activeAccountAction === "email" ? (
+              <div className="account-action-panel">
+                <button className="account-detail-button" type="button">
+                  Previous Email
+                </button>
+                <button className="account-detail-button" type="button">
+                  New Email
+                </button>
+              </div>
+            ) : null}
+          </div>
+
+          <div className="account-action-group">
+            <button
+              className={`settings-action-button${
+                activeAccountAction === "password" ? " is-open" : ""
+              }`}
+              type="button"
+              onClick={() => handleAccountActionClick("password")}
+            >
+              Change Password
+            </button>
+
+            {activeAccountAction === "password" ? (
+              <div className="account-action-panel">
+                <button className="account-detail-button" type="button">
+                  Previous Password
+                </button>
+                <button className="account-detail-button" type="button">
+                  New Password
+                </button>
+              </div>
+            ) : null}
+          </div>
         </div>
 
         <div className="settings-card settings-card--preferences">
