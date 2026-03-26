@@ -42,7 +42,7 @@ function App() {
       activeScreen={activeScreen}
       onChangeScreen={setActiveScreen}
     >
-      <ActiveScreen />
+      <ActiveScreen onNavigateScreen={setActiveScreen} />
     </AppFrame>
   );
 }

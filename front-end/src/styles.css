@@ -105,6 +105,291 @@ body {
   color: var(--muted);
 }
 
+.intro-screen {
+  display: flex;
+  justify-content: center;
+}
+
+.intro-panel {
+  width: min(100%, 760px);
+  border: 1px solid #d7dee8;
+  border-radius: 1.5rem;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(245, 248, 252, 0.98) 100%);
+  box-shadow:
+    0 18px 50px rgba(19, 32, 53, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.85);
+  padding: 1.25rem;
+}
+
+.intro-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+  margin-left: auto;
+  width: min(100%, 260px);
+}
+
+.intro-actions__button {
+  border: 1px solid #8693a7;
+  background: #dde3eb;
+  color: var(--text);
+  border-radius: 0.95rem;
+  padding: 0.9rem 1rem;
+  font: inherit;
+  font-size: 1rem;
+  cursor: pointer;
+  transition:
+    background-color 150ms ease,
+    transform 150ms ease,
+    box-shadow 150ms ease;
+}
+
+.intro-actions__button.is-active {
+  background: linear-gradient(180deg, #f6f8fb 0%, #e4eaf2 100%);
+  box-shadow: 0 10px 24px rgba(31, 106, 165, 0.15);
+}
+
+.intro-actions__button:hover,
+.intro-primary-button:hover,
+.intro-secondary-button:hover,
+.intro-recent-searches__item:hover {
+  transform: translateY(-1px);
+}
+
+.intro-hero {
+  padding: 2.5rem 0 2rem;
+  text-align: center;
+}
+
+.intro-hero__eyebrow {
+  margin: 0 0 1rem;
+  font-size: 0.82rem;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: #556175;
+}
+
+.intro-hero__title {
+  margin: 0;
+  display: inline-block;
+  font-family: "Sora", "Outfit", sans-serif;
+  font-size: clamp(3rem, 10vw, 5.4rem);
+  letter-spacing: 0.06em;
+  line-height: 0.94;
+  border-bottom: 4px solid #3790ff;
+}
+
+.intro-hero__title--second {
+  display: block;
+  width: fit-content;
+  margin: 0.5rem auto 0;
+}
+
+.intro-hero__copy {
+  width: min(100%, 430px);
+  margin: 1rem auto 0;
+  font-size: 0.98rem;
+  line-height: 1.6;
+}
+
+.intro-form {
+  display: grid;
+  gap: 1.5rem;
+}
+
+.intro-form__grid,
+.intro-advanced__grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.intro-field {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.intro-field span {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.intro-field input,
+.intro-field select {
+  width: 100%;
+  border: 1px solid #d2d9e3;
+  border-radius: 0.95rem;
+  background: #e7ebf0;
+  min-height: 3.4rem;
+  padding: 0.9rem 1rem;
+  font: inherit;
+  color: var(--text);
+  transition:
+    border-color 150ms ease,
+    box-shadow 150ms ease,
+    background-color 150ms ease;
+}
+
+.intro-field select {
+  appearance: none;
+  background-image:
+    linear-gradient(45deg, transparent 50%, #5d6879 50%),
+    linear-gradient(135deg, #5d6879 50%, transparent 50%);
+  background-position:
+    calc(100% - 1.4rem) calc(50% - 0.12rem),
+    calc(100% - 1rem) calc(50% - 0.12rem);
+  background-size: 0.45rem 0.45rem, 0.45rem 0.45rem;
+  background-repeat: no-repeat;
+  padding-right: 2.8rem;
+  color: var(--text);
+}
+
+.intro-field input::placeholder {
+  color: #6c7787;
+}
+
+.intro-field input:focus,
+.intro-field select:focus {
+  outline: none;
+  border-color: #5c95c4;
+  background: #f8fbff;
+  box-shadow: 0 0 0 4px rgba(56, 144, 255, 0.12);
+}
+
+.intro-date-input {
+  position: relative;
+}
+
+.intro-date-input input {
+  padding-right: 4.4rem;
+  appearance: none;
+}
+
+.intro-date-input input[type="date"] {
+  color-scheme: light;
+}
+
+.intro-date-input input[type="date"]::-webkit-calendar-picker-indicator {
+  opacity: 0;
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  cursor: pointer;
+}
+
+.intro-date-input__trigger {
+  position: absolute;
+  top: 50%;
+  right: 0.65rem;
+  transform: translateY(-50%);
+  width: 2.85rem;
+  height: 2.85rem;
+  border: 1px solid #b7c6d7;
+  border-radius: 0.85rem;
+  background:
+    linear-gradient(180deg, #f7fbff 0%, #dceaf7 100%);
+  color: #215f92;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition:
+    transform 150ms ease,
+    box-shadow 150ms ease,
+    border-color 150ms ease,
+    background-color 150ms ease;
+}
+
+.intro-date-input__trigger:hover {
+  transform: translateY(calc(-50% - 1px));
+  border-color: #8db0cf;
+  box-shadow: 0 10px 18px rgba(31, 106, 165, 0.14);
+}
+
+.intro-date-input__trigger:focus-visible {
+  outline: none;
+  border-color: #5c95c4;
+  box-shadow: 0 0 0 4px rgba(56, 144, 255, 0.16);
+}
+
+.intro-date-input__trigger svg {
+  width: 1.35rem;
+  height: 1.35rem;
+}
+
+.intro-form__actions {
+  display: grid;
+  gap: 0.9rem;
+  grid-template-columns: minmax(120px, 0.8fr) minmax(0, 1.7fr);
+  align-items: center;
+}
+
+.intro-primary-button,
+.intro-secondary-button,
+.intro-recent-searches__item {
+  border: 1px solid transparent;
+  border-radius: 0.95rem;
+  font: inherit;
+  cursor: pointer;
+  transition:
+    background-color 150ms ease,
+    border-color 150ms ease,
+    transform 150ms ease,
+    box-shadow 150ms ease;
+}
+
+.intro-primary-button {
+  min-height: 3.4rem;
+  background: linear-gradient(135deg, #c9ced6 0%, #b8c3d0 100%);
+  color: var(--text);
+  font-size: 1.25rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.intro-secondary-button {
+  min-height: 3.4rem;
+  background: #dde2e8;
+  color: #243041;
+  font-size: 0.84rem;
+  font-weight: 700;
+}
+
+.intro-secondary-button.is-active {
+  border-color: #78a7d2;
+  background: #edf5fc;
+}
+
+.intro-recent-searches {
+  display: grid;
+  gap: 0.65rem;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+}
+
+.intro-recent-searches__item {
+  min-height: 2.8rem;
+  background: #f2f6fa;
+  border-color: #d2dbe6;
+  color: #334155;
+  padding: 0.75rem 0.9rem;
+}
+
+.intro-advanced {
+  display: grid;
+  gap: 1rem;
+  padding-top: 0.25rem;
+}
+
+.intro-advanced__title {
+  margin: 0;
+  font-family: "Sora", "Outfit", sans-serif;
+  font-size: clamp(1.25rem, 2vw, 1.55rem);
+}
+
 .placeholder-grid {
   display: grid;
   gap: 0.7rem;
@@ -300,6 +585,27 @@ body {
   }
 }
 
+@media (max-width: 639px) {
+  .intro-panel {
+    padding: 1rem;
+    border-radius: 1.2rem;
+  }
+
+  .intro-actions {
+    width: 100%;
+  }
+
+  .intro-hero {
+    padding: 2rem 0 1.5rem;
+  }
+
+  .intro-form__grid,
+  .intro-advanced__grid,
+  .intro-form__actions {
+    grid-template-columns: 1fr;
+  }
+}
+
 @media (min-width: 860px) {
   .app-shell {
     grid-template-columns: 260px 1fr;
@@ -334,5 +640,9 @@ body {
     grid-area: canvas;
     min-height: 70vh;
     padding: 1.5rem;
+  }
+
+  .intro-panel {
+    padding: 1.6rem 1.8rem 1.8rem;
   }
 }
