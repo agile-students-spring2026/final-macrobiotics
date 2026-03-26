@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 
 const ACCOUNT_ACTIONS = [
   { id: "signup", label: "Sign up" },
@@ -8,6 +8,7 @@ const ACCOUNT_ACTIONS = [
 function IntroPage({ onNavigateScreen }) {
   const [accountMode, setAccountMode] = useState("signup");
   const [showRecentSearches, setShowRecentSearches] = useState(false);
+  const dateInputRef = useRef(null);
   const [formValues, setFormValues] = useState({
     from: "",
     to: "",
@@ -32,6 +33,19 @@ function IntroPage({ onNavigateScreen }) {
     if (onNavigateScreen) {
       onNavigateScreen("login");
     }
+  }
+
+  function handleDatePickerOpen() {
+    if (!dateInputRef.current) {
+      return;
+    }
+
+    if (typeof dateInputRef.current.showPicker === "function") {
+      dateInputRef.current.showPicker();
+      return;
+    }
+
+    dateInputRef.current.focus();
   }
 
   return (
@@ -99,13 +113,29 @@ function IntroPage({ onNavigateScreen }) {
 
             <label className="intro-field">
               <span>Date</span>
-              <input
-                name="date"
-                type="text"
-                value={formValues.date}
-                onChange={handleFieldChange}
-                placeholder="Travel date"
-              />
+              <div className="intro-date-input">
+                <input
+                  ref={dateInputRef}
+                  name="date"
+                  type="date"
+                  value={formValues.date}
+                  onChange={handleFieldChange}
+                  aria-label="Travel date"
+                />
+                <button
+                  type="button"
+                  className="intro-date-input__trigger"
+                  onClick={handleDatePickerOpen}
+                  aria-label="Open date picker"
+                >
+                  <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                    <path
+                      d="M7 2a1 1 0 0 1 1 1v1h8V3a1 1 0 1 1 2 0v1h1.25A2.75 2.75 0 0 1 22 6.75v12.5A2.75 2.75 0 0 1 19.25 22H4.75A2.75 2.75 0 0 1 2 19.25V6.75A2.75 2.75 0 0 1 4.75 4H6V3a1 1 0 0 1 1-1Zm13 8H4v9.25c0 .414.336.75.75.75h14.5a.75.75 0 0 0 .75-.75V10ZM6 6H4.75a.75.75 0 0 0-.75.75V8h16V6.75a.75.75 0 0 0-.75-.75H18v1a1 1 0 1 1-2 0V6H8v1a1 1 0 1 1-2 0V6Zm1.5 6.25h2.25a.75.75 0 0 1 0 1.5H7.5a.75.75 0 0 1 0-1.5Zm0 3.5h2.25a.75.75 0 0 1 0 1.5H7.5a.75.75 0 0 1 0-1.5Zm6.75-3.5h2.25a.75.75 0 0 1 0 1.5h-2.25a.75.75 0 0 1 0-1.5Zm0 3.5h2.25a.75.75 0 0 1 0 1.5h-2.25a.75.75 0 0 1 0-1.5Z"
+                      fill="currentColor"
+                    />
+                  </svg>
+                </button>
+              </div>
             </label>
           </div>
 

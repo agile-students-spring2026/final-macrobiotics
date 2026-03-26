@@ -242,6 +242,68 @@ body {
   box-shadow: 0 0 0 4px rgba(56, 144, 255, 0.12);
 }
 
+.intro-date-input {
+  position: relative;
+}
+
+.intro-date-input input {
+  padding-right: 4.4rem;
+  appearance: none;
+}
+
+.intro-date-input input[type="date"] {
+  color-scheme: light;
+}
+
+.intro-date-input input[type="date"]::-webkit-calendar-picker-indicator {
+  opacity: 0;
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  cursor: pointer;
+}
+
+.intro-date-input__trigger {
+  position: absolute;
+  top: 50%;
+  right: 0.65rem;
+  transform: translateY(-50%);
+  width: 2.85rem;
+  height: 2.85rem;
+  border: 1px solid #b7c6d7;
+  border-radius: 0.85rem;
+  background:
+    linear-gradient(180deg, #f7fbff 0%, #dceaf7 100%);
+  color: #215f92;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition:
+    transform 150ms ease,
+    box-shadow 150ms ease,
+    border-color 150ms ease,
+    background-color 150ms ease;
+}
+
+.intro-date-input__trigger:hover {
+  transform: translateY(calc(-50% - 1px));
+  border-color: #8db0cf;
+  box-shadow: 0 10px 18px rgba(31, 106, 165, 0.14);
+}
+
+.intro-date-input__trigger:focus-visible {
+  outline: none;
+  border-color: #5c95c4;
+  box-shadow: 0 0 0 4px rgba(56, 144, 255, 0.16);
+}
+
+.intro-date-input__trigger svg {
+  width: 1.35rem;
+  height: 1.35rem;
+}
+
 .intro-form__actions {
   display: grid;
   gap: 0.9rem;
