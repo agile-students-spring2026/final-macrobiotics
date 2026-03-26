@@ -5,6 +5,14 @@ const ACCOUNT_ACTIONS = [
   { id: "login", label: "Log in" }
 ];
 
+const CABIN_OPTIONS = [
+  { value: "", label: "Select cabin class" },
+  { value: "economy", label: "Economy" },
+  { value: "premium-economy", label: "Premium Economy" },
+  { value: "business", label: "Business" },
+  { value: "first", label: "First" }
+];
+
 function IntroPage({ onNavigateScreen }) {
   const [accountMode, setAccountMode] = useState("signup");
   const [showRecentSearches, setShowRecentSearches] = useState(false);
@@ -68,8 +76,7 @@ function IntroPage({ onNavigateScreen }) {
 
         <header className="intro-hero">
           <p className="intro-hero__eyebrow">Award travel, simplified.</p>
-          <h2 className="intro-hero__title">WELCOME</h2>
-          <h2 className="intro-hero__title intro-hero__title--second">TEXT</h2>
+          <h2 className="intro-hero__title">MILELY</h2>
           <p className="intro-hero__copy">
             Start with a quick mileage search, then refine with traveler and
             airline preferences.
@@ -102,13 +109,17 @@ function IntroPage({ onNavigateScreen }) {
 
             <label className="intro-field">
               <span>Class</span>
-              <input
+              <select
                 name="classType"
-                type="text"
                 value={formValues.classType}
                 onChange={handleFieldChange}
-                placeholder="Cabin class"
-              />
+              >
+                {CABIN_OPTIONS.map((option) => (
+                  <option key={option.value || "placeholder"} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
             </label>
 
             <label className="intro-field">

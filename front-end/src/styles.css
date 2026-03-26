@@ -216,7 +216,8 @@ body {
   color: #1f2937;
 }
 
-.intro-field input {
+.intro-field input,
+.intro-field select {
   width: 100%;
   border: 1px solid #d2d9e3;
   border-radius: 0.95rem;
@@ -231,11 +232,26 @@ body {
     background-color 150ms ease;
 }
 
+.intro-field select {
+  appearance: none;
+  background-image:
+    linear-gradient(45deg, transparent 50%, #5d6879 50%),
+    linear-gradient(135deg, #5d6879 50%, transparent 50%);
+  background-position:
+    calc(100% - 1.4rem) calc(50% - 0.12rem),
+    calc(100% - 1rem) calc(50% - 0.12rem);
+  background-size: 0.45rem 0.45rem, 0.45rem 0.45rem;
+  background-repeat: no-repeat;
+  padding-right: 2.8rem;
+  color: var(--text);
+}
+
 .intro-field input::placeholder {
   color: #6c7787;
 }
 
-.intro-field input:focus {
+.intro-field input:focus,
+.intro-field select:focus {
   outline: none;
   border-color: #5c95c4;
   background: #f8fbff;
