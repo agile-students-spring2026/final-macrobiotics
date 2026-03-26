@@ -1,33 +1,4 @@
-import { useMemo, useState } from "react";
-
-const RECENTLY_VIEWED_FLIGHTS = [
-  {
-    id: "history-1",
-    airline: "Delta",
-    departureTime: "06:30",
-    departureAirport: "SFO",
-    arrivalTime: "13:30",
-    arrivalAirport: "JFK",
-    duration: "12h 30m",
-    stopLabel: "Nonstop",
-    flightNumbers: ["DL1131"],
-    miles: "35,000",
-    viewedDate: "2026-03-18"
-  },
-  {
-    id: "history-2",
-    airline: "Delta",
-    departureTime: "06:30",
-    departureAirport: "SFO",
-    arrivalTime: "15:30",
-    arrivalAirport: "JFK",
-    duration: "14h 30m",
-    stopLabel: "Via IAD",
-    flightNumbers: ["DL1131", "DL1135"],
-    miles: "35,000",
-    viewedDate: "2026-03-21"
-  }
-];
+import { useEffect, useMemo, useState } from "react";
 
 function HistoryPage({ onNavigateScreen }) {
   const [filters, setFilters] = useState({
@@ -35,9 +6,48 @@ function HistoryPage({ onNavigateScreen }) {
     destination: "",
     date: ""
   });
+  const [flights, setFlights] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState("");
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadHistory() {
+      try {
+        const response = await fetch("/mock/recently-viewed-flights.json");
+
+        if (!response.ok) {
+          throw new Error("Unable to load recently viewed flights.");
+        }
+
+        const historyFlights = await response.json();
+
+        if (isMounted) {
+          setFlights(historyFlights);
+          setLoadError("");
+        }
+      } catch (error) {
+        if (isMounted) {
+          setFlights([]);
+          setLoadError("Unable to load recently viewed flights.");
+        }
+      } finally {
+        if (isMounted) {
+          setIsLoading(false);
+        }
+      }
+    }
+
+    loadHistory();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   const filteredFlights = useMemo(() => {
-    return RECENTLY_VIEWED_FLIGHTS.filter((flight) => {
+    return flights.filter((flight) => {
       const airlineMatches = flight.airline
         .toLowerCase()
         .includes(filters.airline.trim().toLowerCase());
@@ -48,7 +58,7 @@ function HistoryPage({ onNavigateScreen }) {
 
       return airlineMatches && destinationMatches && dateMatches;
     });
-  }, [filters]);
+  }, [filters, flights]);
 
   function handleFilterChange(event) {
     const { name, value } = event.target;
@@ -121,49 +131,61 @@ function HistoryPage({ onNavigateScreen }) {
         </form>
 
         <div className="history-results" aria-live="polite">
-          {filteredFlights.map((flight) => (
-            <article key={flight.id} className="history-card">
-              <div className="history-card__summary">
-                <div className="history-card__terminal">
-                  <span className="history-card__time">{flight.departureTime}</span>
-                  <span className="history-card__airport">
-                    {flight.departureAirport}
-                  </span>
-                </div>
+          {isLoading ? (
+            <div className="history-empty-state">Loading recently viewed flights...</div>
+          ) : null}
 
-                <div className="history-card__route">
-                  <span className="history-card__duration">{flight.duration}</span>
-                  <div className="history-card__line" aria-hidden="true">
-                    <span className="history-card__line-fill" />
-                    <span className="history-card__line-arrow">&rarr;</span>
+          {!isLoading && loadError ? (
+            <div className="history-empty-state">{loadError}</div>
+          ) : null}
+
+          {!isLoading && !loadError
+            ? filteredFlights.map((flight) => (
+                <article key={flight.id} className="history-card">
+                  <div className="history-card__summary">
+                    <div className="history-card__terminal">
+                      <span className="history-card__time">
+                        {flight.departureTime}
+                      </span>
+                      <span className="history-card__airport">
+                        {flight.departureAirport}
+                      </span>
+                    </div>
+
+                    <div className="history-card__route">
+                      <span className="history-card__duration">{flight.duration}</span>
+                      <div className="history-card__line" aria-hidden="true">
+                        <span className="history-card__line-fill" />
+                        <span className="history-card__line-arrow">&rarr;</span>
+                      </div>
+                      <span className="history-card__stop">{flight.stopLabel}</span>
+                    </div>
+
+                    <div className="history-card__terminal history-card__terminal--arrival">
+                      <span className="history-card__airport">
+                        {flight.arrivalAirport}
+                      </span>
+                      <span className="history-card__time">{flight.arrivalTime}</span>
+                    </div>
                   </div>
-                  <span className="history-card__stop">{flight.stopLabel}</span>
-                </div>
 
-                <div className="history-card__terminal history-card__terminal--arrival">
-                  <span className="history-card__airport">
-                    {flight.arrivalAirport}
-                  </span>
-                  <span className="history-card__time">{flight.arrivalTime}</span>
-                </div>
-              </div>
+                  <div className="history-card__meta">
+                    <div className="history-card__airline">
+                      <span className="history-card__badge">{flight.airline}</span>
+                      <div className="history-card__numbers">
+                        {flight.flightNumbers.map((flightNumber) => (
+                          <span key={flightNumber}>{flightNumber}</span>
+                        ))}
+                      </div>
+                    </div>
 
-              <div className="history-card__meta">
-                <div className="history-card__airline">
-                  <span className="history-card__badge">{flight.airline}</span>
-                  <div className="history-card__numbers">
-                    {flight.flightNumbers.map((flightNumber) => (
-                      <span key={flightNumber}>{flightNumber}</span>
-                    ))}
+                    <div className="history-card__miles">{flight.miles} Miles</div>
                   </div>
-                </div>
+                </article>
+              ))
+            : null}
 
-                <div className="history-card__miles">{flight.miles} Miles</div>
-              </div>
-            </article>
-          ))}
-
-          {filteredFlights.length === 0 ? (
+          {!isLoading && !loadError && filteredFlights.length === 0 ? (
             <div className="history-empty-state">
               No recently viewed flights match the current filters.
             </div>
