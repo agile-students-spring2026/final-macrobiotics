@@ -1,12 +1,28 @@
 import { useEffect, useMemo, useState } from "react";
 
+const DATE_FORMATTER = new Intl.DateTimeFormat("en-US", {
+  month: "short",
+  day: "numeric",
+  year: "numeric"
+});
+
+function formatDate(dateString) {
+  const date = new Date(`${dateString}T00:00:00`);
+
+  if (Number.isNaN(date.getTime())) {
+    return dateString;
+  }
+
+  return DATE_FORMATTER.format(date);
+}
+
 function HistoryPage({ onNavigateScreen }) {
   const [filters, setFilters] = useState({
     airline: "",
     destination: "",
     date: ""
   });
-  const [flights, setFlights] = useState([]);
+  const [searches, setSearches] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
 
@@ -15,22 +31,22 @@ function HistoryPage({ onNavigateScreen }) {
 
     async function loadHistory() {
       try {
-        const response = await fetch("/mock/recently-viewed-flights.json");
+        const response = await fetch("/mock/recent-searches.json");
 
         if (!response.ok) {
-          throw new Error("Unable to load recently viewed flights.");
+          throw new Error("Unable to load recent searches.");
         }
 
-        const historyFlights = await response.json();
+        const recentSearches = await response.json();
 
         if (isMounted) {
-          setFlights(historyFlights);
+          setSearches(recentSearches);
           setLoadError("");
         }
       } catch (error) {
         if (isMounted) {
-          setFlights([]);
-          setLoadError("Unable to load recently viewed flights.");
+          setSearches([]);
+          setLoadError("Unable to load recent searches.");
         }
       } finally {
         if (isMounted) {
@@ -46,19 +62,19 @@ function HistoryPage({ onNavigateScreen }) {
     };
   }, []);
 
-  const filteredFlights = useMemo(() => {
-    return flights.filter((flight) => {
-      const airlineMatches = flight.airline
+  const filteredSearches = useMemo(() => {
+    return searches.filter((search) => {
+      const airlineMatches = search.preferredAirline
         .toLowerCase()
         .includes(filters.airline.trim().toLowerCase());
-      const destinationMatches = flight.arrivalAirport
+      const destinationMatches = search.destination
         .toLowerCase()
         .includes(filters.destination.trim().toLowerCase());
-      const dateMatches = !filters.date || flight.viewedDate === filters.date;
+      const dateMatches = !filters.date || search.travelDate === filters.date;
 
       return airlineMatches && destinationMatches && dateMatches;
     });
-  }, [filters, flights]);
+  }, [filters, searches]);
 
   function handleFilterChange(event) {
     const { name, value } = event.target;
@@ -71,7 +87,7 @@ function HistoryPage({ onNavigateScreen }) {
 
   function handleBackClick() {
     if (onNavigateScreen) {
-      onNavigateScreen("search-results");
+      onNavigateScreen("intro");
     }
   }
 
@@ -87,8 +103,8 @@ function HistoryPage({ onNavigateScreen }) {
         </button>
 
         <header className="history-heading">
-          <p className="history-heading__eyebrow">History</p>
-          <h2 className="history-heading__title">Recently Viewed</h2>
+          <p className="history-heading__eyebrow">Search History</p>
+          <h2 className="history-heading__title">Recently Searched</h2>
         </header>
 
         <form
@@ -132,7 +148,7 @@ function HistoryPage({ onNavigateScreen }) {
 
         <div className="history-results" aria-live="polite">
           {isLoading ? (
-            <div className="history-empty-state">Loading recently viewed flights...</div>
+            <div className="history-empty-state">Loading recent searches...</div>
           ) : null}
 
           {!isLoading && loadError ? (
@@ -140,54 +156,53 @@ function HistoryPage({ onNavigateScreen }) {
           ) : null}
 
           {!isLoading && !loadError
-            ? filteredFlights.map((flight) => (
-                <article key={flight.id} className="history-card">
-                  <div className="history-card__summary">
-                    <div className="history-card__terminal">
-                      <span className="history-card__time">
-                        {flight.departureTime}
+            ? filteredSearches.map((search) => (
+                <article key={search.id} className="history-card history-card--search">
+                  <div className="history-card__summary history-card__summary--search">
+                    <div className="history-card__query">
+                      <span className="history-card__query-label">
+                        {search.tripType} search
                       </span>
-                      <span className="history-card__airport">
-                        {flight.departureAirport}
-                      </span>
+                      <h3 className="history-card__query-route">
+                        {search.origin} to {search.destination}
+                      </h3>
                     </div>
 
-                    <div className="history-card__route">
-                      <span className="history-card__duration">{flight.duration}</span>
-                      <div className="history-card__line" aria-hidden="true">
-                        <span className="history-card__line-fill" />
-                        <span className="history-card__line-arrow">&rarr;</span>
-                      </div>
-                      <span className="history-card__stop">{flight.stopLabel}</span>
-                    </div>
-
-                    <div className="history-card__terminal history-card__terminal--arrival">
-                      <span className="history-card__airport">
-                        {flight.arrivalAirport}
+                    <div className="history-card__query-date">
+                      <span className="history-card__query-date-label">
+                        Travel Date
                       </span>
-                      <span className="history-card__time">{flight.arrivalTime}</span>
+                      <span className="history-card__query-date-value">
+                        {formatDate(search.travelDate)}
+                      </span>
                     </div>
                   </div>
 
-                  <div className="history-card__meta">
-                    <div className="history-card__airline">
-                      <span className="history-card__badge">{flight.airline}</span>
-                      <div className="history-card__numbers">
-                        {flight.flightNumbers.map((flightNumber) => (
-                          <span key={flightNumber}>{flightNumber}</span>
-                        ))}
-                      </div>
+                  <div className="history-card__meta history-card__meta--search">
+                    <div className="history-card__chip-list">
+                      <span className="history-card__chip">{search.cabin}</span>
+                      <span className="history-card__chip">
+                        Airline: {search.preferredAirline}
+                      </span>
+                      <span className="history-card__chip">
+                        Travelers: {search.travelers}
+                      </span>
+                      <span className="history-card__chip">
+                        Miles: {search.milesRange}
+                      </span>
                     </div>
 
-                    <div className="history-card__miles">{flight.miles} Miles</div>
+                    <span className="history-card__saved-at">
+                      Saved {formatDate(search.searchedAt)}
+                    </span>
                   </div>
                 </article>
               ))
             : null}
 
-          {!isLoading && !loadError && filteredFlights.length === 0 ? (
+          {!isLoading && !loadError && filteredSearches.length === 0 ? (
             <div className="history-empty-state">
-              No recently viewed flights match the current filters.
+              No saved searches match the current filters.
             </div>
           ) : null}
         </div>

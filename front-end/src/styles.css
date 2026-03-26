@@ -525,12 +525,62 @@ body {
   box-shadow: 0 12px 24px rgba(19, 32, 53, 0.06);
 }
 
+.history-card--search {
+  gap: 0.9rem;
+}
+
 .history-card__summary,
 .history-card__meta {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
+}
+
+.history-card__summary--search,
+.history-card__meta--search {
+  align-items: flex-start;
+}
+
+.history-card__query {
+  display: grid;
+  gap: 0.3rem;
+}
+
+.history-card__query-label {
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.history-card__query-route {
+  margin: 0;
+  font-family: "Sora", "Outfit", sans-serif;
+  font-size: clamp(1.5rem, 4vw, 1.95rem);
+  line-height: 1.05;
+}
+
+.history-card__query-date {
+  display: grid;
+  justify-items: end;
+  gap: 0.2rem;
+}
+
+.history-card__query-date-label {
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.history-card__query-date-value {
+  font-family: "Sora", "Outfit", sans-serif;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text);
 }
 
 .history-card__terminal {
@@ -595,6 +645,30 @@ body {
 .history-card__meta {
   padding-top: 0.95rem;
   border-top: 1px dashed var(--panel-line);
+}
+
+.history-card__chip-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+}
+
+.history-card__chip {
+  padding: 0.45rem 0.75rem;
+  border-radius: 999px;
+  border: 1px solid #d3dfeb;
+  background: #f4f8fb;
+  color: var(--text);
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.history-card__saved-at {
+  padding-top: 0.45rem;
+  color: var(--muted);
+  font-size: 0.9rem;
+  font-weight: 600;
+  white-space: nowrap;
 }
 
 .history-card__airline {
@@ -884,6 +958,10 @@ body {
   .history-card__airline {
     flex-direction: column;
     align-items: flex-start;
+  }
+
+  .history-card__query-date {
+    justify-items: start;
   }
 
   .history-card__terminal--arrival {

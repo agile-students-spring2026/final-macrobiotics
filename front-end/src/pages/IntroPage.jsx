@@ -15,7 +15,6 @@ const CABIN_OPTIONS = [
 
 function IntroPage({ onNavigateScreen }) {
   const [accountMode, setAccountMode] = useState("signup");
-  const [showRecentSearches, setShowRecentSearches] = useState(false);
   const dateInputRef = useRef(null);
   const [formValues, setFormValues] = useState({
     from: "",
@@ -153,10 +152,8 @@ function IntroPage({ onNavigateScreen }) {
           <div className="intro-form__actions">
             <button
               type="button"
-              className={`intro-secondary-button ${
-                showRecentSearches ? "is-active" : ""
-              }`}
-              onClick={() => setShowRecentSearches((currentValue) => !currentValue)}
+              className="intro-secondary-button"
+              onClick={() => onNavigateScreen && onNavigateScreen("history")}
             >
               Recent Searches
             </button>
@@ -171,15 +168,6 @@ function IntroPage({ onNavigateScreen }) {
               Search
             </button>
           </div>
-
-          {showRecentSearches ? (
-            <div className="intro-recent-searches" aria-live="polite">
-              <div className="intro-recent-searches__item">
-                Recent search items will appear here once the search history
-                feature is connected.
-              </div>
-            </div>
-          ) : null}
 
           <div className="intro-advanced">
             <h3 className="intro-advanced__title">Advanced Options</h3>
