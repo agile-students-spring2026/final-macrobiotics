@@ -13,6 +13,17 @@ const CABIN_OPTIONS = [
   { value: "first", label: "First" }
 ];
 
+const TRAVELER_OPTIONS = [
+  { value: "1", label: "1" },
+  { value: "2", label: "2" },
+  { value: "3", label: "3" },
+  { value: "4", label: "4" },
+  { value: "5", label: "5" },
+  { value: "6", label: "6" },
+  { value: "7", label: "7" },
+  { value: "8", label: "8" }
+];
+
 function IntroPage({ onNavigateScreen }) {
   const [accountMode, setAccountMode] = useState("signup");
   const [showRecentSearches, setShowRecentSearches] = useState(false);
@@ -25,7 +36,7 @@ function IntroPage({ onNavigateScreen }) {
     date: "",
     airlines: "",
     miles: "",
-    travelers: ""
+    travelers: "1"
   });
 
   function handleFieldChange(event) {
@@ -235,13 +246,17 @@ function IntroPage({ onNavigateScreen }) {
 
                 <label className="intro-field">
                   <span>Num of Travellers</span>
-                  <input
+                  <select
                     name="travelers"
-                    type="text"
                     value={formValues.travelers}
                     onChange={handleFieldChange}
-                    placeholder="Passenger count"
-                  />
+                  >
+                    {TRAVELER_OPTIONS.map((option) => (
+                      <option key={option.value || "placeholder"} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
                 </label>
               </div>
             ) : null}
