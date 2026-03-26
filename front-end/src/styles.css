@@ -123,6 +123,183 @@ body {
   font-weight: 500;
 }
 
+.settings-grid {
+  display: grid;
+  gap: 1rem;
+  margin-top: 1.25rem;
+}
+
+.settings-card {
+  border: 1px solid var(--panel-line);
+  border-radius: 1rem;
+  background:
+    linear-gradient(180deg, #fcfdff 0%, #f1f5f9 100%);
+  padding: 1rem;
+  display: grid;
+  gap: 0.85rem;
+}
+
+.settings-card h3 {
+  margin: 0;
+  font-family: "Sora", "Outfit", sans-serif;
+  font-size: 1rem;
+}
+
+.settings-action-button,
+.settings-toggle-button,
+.account-detail-button,
+.preference-button,
+.preference-edit-button,
+.preferences-edit-all-button {
+  width: 100%;
+  border: 1px solid transparent;
+  border-radius: 0.85rem;
+  font: inherit;
+  cursor: pointer;
+  transition:
+    transform 150ms ease,
+    border-color 150ms ease,
+    background-color 150ms ease,
+    box-shadow 150ms ease;
+}
+
+.settings-action-button,
+.settings-toggle-button {
+  padding: 0.95rem 1rem;
+  background: #e9eef5;
+  color: var(--text);
+  text-align: left;
+  font-weight: 600;
+}
+
+.settings-action-button.is-open {
+  border-color: #6a97bf;
+  background: #e4edf7;
+}
+
+.settings-action-button:hover,
+.settings-toggle-button:hover,
+.account-detail-button:hover,
+.preference-button:hover,
+.preference-edit-button:hover,
+.preferences-edit-all-button:hover {
+  transform: translateY(-1px);
+}
+
+.account-action-group {
+  display: grid;
+  gap: 0.65rem;
+}
+
+.account-action-panel {
+  display: grid;
+  gap: 0.65rem;
+  padding: 0.85rem;
+  border: 1px solid #d8e1eb;
+  border-radius: 0.9rem;
+  background: rgba(255, 255, 255, 0.78);
+}
+
+.account-detail-button {
+  padding: 0.85rem 0.95rem;
+  background: #f4f8fb;
+  border-color: #d3dfeb;
+  text-align: left;
+  color: var(--text);
+  font-weight: 600;
+}
+
+.settings-toggle-button {
+  background:
+    linear-gradient(135deg, #dcecff 0%, #edf4fb 100%);
+  border-color: #bfd3e8;
+}
+
+.settings-toggle-button.is-open {
+  border-color: #6a97bf;
+  box-shadow: 0 10px 20px rgba(31, 106, 165, 0.12);
+}
+
+.settings-card--preferences {
+  align-content: start;
+}
+
+.preferences-panel {
+  border: 1px solid #d8e1eb;
+  border-radius: 1rem;
+  background: rgba(255, 255, 255, 0.7);
+  padding: 0.9rem;
+  display: grid;
+  gap: 1rem;
+}
+
+.preferences-list {
+  display: grid;
+  gap: 0.8rem;
+}
+
+.preference-item {
+  display: grid;
+  gap: 0.55rem;
+}
+
+.preference-button {
+  padding: 0.95rem 1rem;
+  background: #f4f8fb;
+  border-color: #d3dfeb;
+  text-align: left;
+  color: var(--text);
+}
+
+.preference-button.is-active {
+  border-color: #5f8db6;
+  background: #e8f1f8;
+  box-shadow: 0 10px 20px rgba(26, 55, 89, 0.08);
+}
+
+.preference-button__label,
+.preference-button__value {
+  display: block;
+}
+
+.preference-button__label {
+  font-size: 0.82rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.preference-button__value {
+  margin-top: 0.35rem;
+  font-weight: 700;
+}
+
+.preference-item__actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.preference-edit-button {
+  width: auto;
+  min-width: 88px;
+  padding: 0.7rem 1rem;
+  background: var(--accent);
+  color: #f7fbff;
+}
+
+.preferences-edit-all-button {
+  padding: 0.9rem 1rem;
+  background: var(--text);
+  color: #f8fbff;
+}
+
+@media (min-width: 720px) {
+  .settings-grid {
+    grid-template-columns: minmax(220px, 0.85fr) minmax(0, 1.15fr);
+    align-items: start;
+  }
+}
+
 @media (min-width: 860px) {
   .app-shell {
     grid-template-columns: 260px 1fr;
