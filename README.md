@@ -1,19 +1,59 @@
-# Project Repository
+# Milely
 
-This repository will be used for team projects.
+Frontend setup instructions for the current React/Vite app.
 
-Several sets of instructions are included in this repository. They should each be treated as separate assignments with their own due dates and sets of requirements.
+## Run the Frontend
 
-1. See the [App Map & Wireframes](instructions-0a-app-map-wireframes.md) and [Prototyping](./instructions-0b-prototyping.md) instructions for the requirements of the initial user experience design of the app.
+### Windows
 
-1. Delete the contents of this file and replace with the contents of a proper README.md, as described in the [project setup instructions](./instructions-0c-project-setup.md)
+1. Open PowerShell in the project root.
+2. Move into the frontend folder:
 
-1. See the [Sprint Planning instructions](instructions-0d-sprint-planning.md) for the requirements of Sprint Planning for each Sprint.
+```powershell
+cd front-end
+```
 
-1. See the [Front-End Development instructions](./instructions-1-front-end.md) for the requirements of the initial Front-End Development.
+3. Install dependencies:
 
-1. See the [Back-End Development instructions](./instructions-2-back-end.md) for the requirements of the initial Back-End Development.
+```powershell
+npm install
+```
 
-1. See the [Database Integration instructions](./instructions-3-database.md) for the requirements of integrating a database into the back-end.
+4. Start the development server:
 
-1. See the [Deployment instructions](./instructions-4-deployment.md) for the requirements of deploying an app.
+```powershell
+npm run dev
+```
+
+5. Open the local URL shown in the terminal.
+
+### macOS
+
+1. Open Terminal in the project root.
+2. Move into the frontend folder:
+
+```bash
+cd front-end
+```
+
+3. Install dependencies:
+
+```bash
+npm install
+```
+
+4. Start the development server:
+
+```bash
+npm run dev
+```
+
+5. Open the local URL shown in the terminal.
+
+## Build the Frontend
+
+From the `front-end` folder on either Windows or macOS:
+
+```bash
+npm run build
+```
