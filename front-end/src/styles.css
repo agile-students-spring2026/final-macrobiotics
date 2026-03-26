@@ -390,6 +390,266 @@ body {
   font-size: clamp(1.25rem, 2vw, 1.55rem);
 }
 
+.history-screen {
+  display: flex;
+  justify-content: center;
+}
+
+.history-panel {
+  width: min(100%, 760px);
+  border: 1px solid #d7dee8;
+  border-radius: 1.5rem;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(245, 248, 252, 0.98) 100%);
+  box-shadow:
+    0 18px 50px rgba(19, 32, 53, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.85);
+  padding: 1.25rem;
+  display: grid;
+  gap: 1.6rem;
+}
+
+.history-back-button {
+  width: fit-content;
+  border: 1px solid #8693a7;
+  background: #dde3eb;
+  color: var(--text);
+  border-radius: 0.95rem;
+  padding: 0.8rem 1.15rem;
+  font: inherit;
+  font-size: 1rem;
+  cursor: pointer;
+  transition:
+    background-color 150ms ease,
+    transform 150ms ease,
+    box-shadow 150ms ease;
+}
+
+.history-back-button:hover {
+  transform: translateY(-1px);
+  background: #e5ebf2;
+}
+
+.history-heading {
+  text-align: center;
+  display: grid;
+  gap: 0.6rem;
+}
+
+.history-heading__eyebrow {
+  margin: 0;
+  font-size: 0.82rem;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: #556175;
+}
+
+.history-heading__title {
+  margin: 0;
+  font-family: "Sora", "Outfit", sans-serif;
+  font-size: clamp(2.3rem, 8vw, 3.6rem);
+  line-height: 1.02;
+}
+
+.history-filters {
+  width: min(100%, 430px);
+  margin: 0 auto;
+  display: grid;
+  gap: 0.9rem;
+}
+
+.history-filters__title {
+  margin: 0;
+  font-family: "Sora", "Outfit", sans-serif;
+  font-size: 1.7rem;
+  text-align: center;
+}
+
+.history-filter-field {
+  display: grid;
+  grid-template-columns: minmax(96px, auto) minmax(0, 1fr);
+  align-items: center;
+  gap: 0.8rem;
+}
+
+.history-filter-field span {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #1f2937;
+  text-align: right;
+}
+
+.history-filter-field input {
+  width: 100%;
+  border: 1px solid #d2d9e3;
+  border-radius: 0.95rem;
+  background: #e7ebf0;
+  min-height: 3.15rem;
+  padding: 0.8rem 1rem;
+  font: inherit;
+  color: var(--text);
+  transition:
+    border-color 150ms ease,
+    box-shadow 150ms ease,
+    background-color 150ms ease;
+}
+
+.history-filter-field input[type="date"] {
+  color-scheme: light;
+}
+
+.history-filter-field input::placeholder {
+  color: #6c7787;
+}
+
+.history-filter-field input:focus {
+  outline: none;
+  border-color: #5c95c4;
+  background: #f8fbff;
+  box-shadow: 0 0 0 4px rgba(56, 144, 255, 0.12);
+}
+
+.history-results {
+  display: grid;
+  gap: 1rem;
+}
+
+.history-card {
+  border: 1px solid var(--panel-line);
+  border-radius: 1.2rem;
+  background:
+    linear-gradient(180deg, #fcfdff 0%, #eef3f8 100%);
+  padding: 1rem 1.1rem;
+  display: grid;
+  gap: 1rem;
+  box-shadow: 0 12px 24px rgba(19, 32, 53, 0.06);
+}
+
+.history-card__summary,
+.history-card__meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.history-card__terminal {
+  display: flex;
+  align-items: baseline;
+  gap: 0.55rem;
+}
+
+.history-card__terminal--arrival {
+  justify-content: flex-end;
+}
+
+.history-card__time {
+  font-size: 1rem;
+  font-weight: 500;
+  color: var(--muted);
+}
+
+.history-card__airport {
+  font-family: "Sora", "Outfit", sans-serif;
+  font-size: clamp(1.65rem, 4vw, 2rem);
+  font-weight: 700;
+  color: var(--text);
+  line-height: 1;
+}
+
+.history-card__route {
+  flex: 1;
+  min-width: 120px;
+  display: grid;
+  justify-items: center;
+  gap: 0.25rem;
+}
+
+.history-card__duration,
+.history-card__stop {
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: var(--muted);
+}
+
+.history-card__line {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.history-card__line-fill {
+  flex: 1;
+  height: 1.5px;
+  background: var(--panel-line);
+  border-radius: 999px;
+}
+
+.history-card__line-arrow {
+  font-size: 1.35rem;
+  line-height: 1;
+  color: #32455f;
+}
+
+.history-card__meta {
+  padding-top: 0.95rem;
+  border-top: 1px dashed var(--panel-line);
+}
+
+.history-card__airline {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+}
+
+.history-card__badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 3.2rem;
+  min-height: 3.2rem;
+  padding: 0.5rem;
+  border-radius: 0.9rem;
+  border: 1px solid #bfd3e8;
+  background: linear-gradient(135deg, #dcecff 0%, #edf4fb 100%);
+  color: var(--accent);
+  font-size: 0.74rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.history-card__numbers {
+  display: grid;
+  gap: 0.2rem;
+  font-family: "Sora", "Outfit", sans-serif;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.history-card__miles {
+  padding: 0.55rem 1rem;
+  border-radius: 999px;
+  border: 1px solid rgba(31, 106, 165, 0.2);
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-family: "Sora", "Outfit", sans-serif;
+  font-size: 1rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.history-empty-state {
+  border: 1px dashed #b2bbc7;
+  background: #ebeff4;
+  border-radius: 1rem;
+  padding: 1rem;
+  text-align: center;
+  color: #394558;
+  font-weight: 500;
+}
+
 .placeholder-grid {
   display: grid;
   gap: 0.7rem;
@@ -591,6 +851,11 @@ body {
     border-radius: 1.2rem;
   }
 
+  .history-panel {
+    padding: 1rem;
+    border-radius: 1.2rem;
+  }
+
   .intro-actions {
     width: 100%;
   }
@@ -603,6 +868,35 @@ body {
   .intro-advanced__grid,
   .intro-form__actions {
     grid-template-columns: 1fr;
+  }
+
+  .history-filter-field {
+    grid-template-columns: 1fr;
+    gap: 0.45rem;
+  }
+
+  .history-filter-field span {
+    text-align: left;
+  }
+
+  .history-card__summary,
+  .history-card__meta,
+  .history-card__airline {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .history-card__terminal--arrival {
+    justify-content: flex-start;
+  }
+
+  .history-card__route {
+    width: 100%;
+  }
+
+  .history-card__miles {
+    width: 100%;
+    text-align: center;
   }
 }
 
@@ -643,6 +937,10 @@ body {
   }
 
   .intro-panel {
+    padding: 1.6rem 1.8rem 1.8rem;
+  }
+
+  .history-panel {
     padding: 1.6rem 1.8rem 1.8rem;
   }
 }
