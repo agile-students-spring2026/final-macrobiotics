@@ -386,8 +386,34 @@ body {
 
 .intro-advanced__title {
   margin: 0;
+}
+
+.intro-advanced__toggle {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.85rem;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--text);
   font-family: "Sora", "Outfit", sans-serif;
   font-size: clamp(1.25rem, 2vw, 1.55rem);
+  font-weight: 700;
+  text-align: left;
+  cursor: pointer;
+}
+
+.intro-advanced__toggle-icon {
+  width: 1.35rem;
+  height: 1.35rem;
+  flex: none;
+  transition: transform 180ms ease;
+}
+
+.intro-advanced__toggle[aria-expanded="true"] .intro-advanced__toggle-icon {
+  transform: rotate(180deg);
 }
 
 .placeholder-grid {
