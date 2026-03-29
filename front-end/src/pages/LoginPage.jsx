@@ -1,15 +1,56 @@
-function LoginPage() {
-  return (
-    <section className="screen">
-      <h2>Sign Up / Log In Screen</h2>
-      <p>Placeholder for email/password auth and SSO controls.</p>
-      <div className="placeholder-grid">
-        <div className="placeholder-block">Email Input</div>
-        <div className="placeholder-block">Password Input</div>
-        <div className="placeholder-block">Primary Auth Buttons</div>
-      </div>
-    </section>
-  );
+import { useState } from "react";
+
+function LoginPage(){
+
+    const [email, setEmail] = useState("");
+    const [password, setPassword] = useState("");
+
+    return(
+
+        <section className ="screen login-screen">
+
+            <div className ="login-panel">
+
+                <h2> Sign Up or Log In</h2>
+
+                <div className="details">
+                    
+                    <span>Email</span>
+                    <input
+                        type="email"
+                        placeholder="youremail@example.com"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                    />
+                </div>
+
+                <div className="details">
+                    
+                    <span>Password</span>
+                    <input
+                        type="password"
+                        placeholder="xxxxxxxx"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                    />
+                </div>
+
+                <div className="login-buttons">
+
+                    <button className="default-login-button" type="button">
+                        Sign Up or Log In
+                    </button>
+
+                    <button className="sso-login-button" type="button">
+                        Sign In With SSO
+                    </button>
+
+                </div>
+
+            </div>
+
+        </section>
+    );
 }
 
-export default LoginPage;
+export default LoginPage

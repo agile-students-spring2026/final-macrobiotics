@@ -1022,3 +1022,72 @@ body {
     padding: 1.6rem 1.8rem 1.8rem;
   }
 }
+
+.login-screen{
+
+    display: flex;
+    justify-content: center;
+}
+
+.login-panel{
+
+    width:min(100%, 400px);
+    display: grid;
+    gap: 1.1rem;
+}
+
+.login-buttons{
+
+    display: grid;
+    gap: 0.75rem;
+    margin-top: 0.5rem;
+}
+
+.default-login-button, .sso-login-button{
+
+    width: 100%;
+    min-height: 3.4rem;
+    border-radius: 0.95rem;
+    bored: 1px solid transparent;
+    font: inherit;
+    font-size: 1rem;
+    cursor: pointer;
+}
+
+.default-login-button{
+
+    background: linear-gradient(135deg, #c9ced6, 0%, #b8c3d0 100%);
+    font-weight: 700;
+}
+
+.sso-login-button{
+
+    background: #dde2e8;
+    font-weight: 600;
+}
+
+.details{
+
+    display: grid;
+    gap: 0.45rem;
+}
+
+details span{
+
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #1f2937
+}
+
+.details input{
+
+    width: 100%;
+    border: 1px solid #d2d9e3;
+    border-radius: 0.95rem;
+    background: #e7ebf0;
+    min-height: 3.4rem;
+    padding: 0.9rem 1rem;
+    font: inherit;
+    color: var(--text);
+}
+
