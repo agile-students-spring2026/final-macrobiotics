@@ -386,8 +386,34 @@ body {
 
 .intro-advanced__title {
   margin: 0;
+}
+
+.intro-advanced__toggle {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.85rem;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--text);
   font-family: "Sora", "Outfit", sans-serif;
   font-size: clamp(1.25rem, 2vw, 1.55rem);
+  font-weight: 700;
+  text-align: left;
+  cursor: pointer;
+}
+
+.intro-advanced__toggle-icon {
+  width: 1.35rem;
+  height: 1.35rem;
+  flex: none;
+  transition: transform 180ms ease;
+}
+
+.intro-advanced__toggle[aria-expanded="true"] .intro-advanced__toggle-icon {
+  transform: rotate(180deg);
 }
 
 .history-screen {
@@ -452,13 +478,16 @@ body {
 }
 
 .history-filters {
-  width: min(100%, 430px);
-  margin: 0 auto;
+  width: 100%;
+  margin: 0;
   display: grid;
-  gap: 0.9rem;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-items: end;
+  gap: 1rem;
 }
 
 .history-filters__title {
+  grid-column: 1 / -1;
   margin: 0;
   font-family: "Sora", "Outfit", sans-serif;
   font-size: 1.7rem;
@@ -467,16 +496,16 @@ body {
 
 .history-filter-field {
   display: grid;
-  grid-template-columns: minmax(96px, auto) minmax(0, 1fr);
-  align-items: center;
-  gap: 0.8rem;
+  grid-template-columns: 1fr;
+  align-items: start;
+  gap: 0.35rem;
 }
 
 .history-filter-field span {
   font-size: 0.95rem;
   font-weight: 600;
   color: #1f2937;
-  text-align: right;
+  text-align: left;
 }
 
 .history-filter-field input {
