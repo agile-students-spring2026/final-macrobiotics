@@ -1,0 +1,38 @@
+[
+  {
+    "id": "search-1",
+    "origin": "SFO",
+    "destination": "JFK",
+    "travelDate": "2026-04-12",
+    "tripType": "One-way",
+    "cabin": "Business",
+    "preferredAirline": "Delta",
+    "travelers": 1,
+    "milesRange": "30,000-45,000",
+    "searchedAt": "2026-03-18"
+  },
+  {
+    "id": "search-2",
+    "origin": "LAX",
+    "destination": "NRT",
+    "travelDate": "2026-05-03",
+    "tripType": "One-way",
+    "cabin": "Premium Economy",
+    "preferredAirline": "ANA",
+    "travelers": 2,
+    "milesRange": "70,000-95,000",
+    "searchedAt": "2026-03-21"
+  },
+  {
+    "id": "search-3",
+    "origin": "JFK",
+    "destination": "LHR",
+    "travelDate": "2026-06-15",
+    "tripType": "One-way",
+    "cabin": "Economy",
+    "preferredAirline": "Virgin Atlantic",
+    "travelers": 1,
+    "milesRange": "18,000-30,000",
+    "searchedAt": "2026-03-24"
+  }
+]

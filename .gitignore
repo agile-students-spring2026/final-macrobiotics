@@ -85,6 +85,8 @@ jspm_packages/
 # Results of React build script
 build/
 **/build/
+dist/
+**/dist/
 
 # React dependencies
 .pnp
