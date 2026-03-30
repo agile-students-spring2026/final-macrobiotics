@@ -45,7 +45,7 @@ const BookmarksPage = () => {
           throw new Error(`API request failed with status ${response.status}`);
         }
         const data = await response.json();
-        setFlights(data.flights);
+        setFlights(data);
       } catch (err) {
         console.error("Failed to fetch flights:", err);
         setError(err.message);
@@ -59,19 +59,13 @@ const BookmarksPage = () => {
 
   return (
     <section className="screen">
-      <h2>Bookmarks Screen</h2>
-      <p>Placeholder for saved flights and quick-open actions.</p>
-      <div className="placeholder-grid">
-        <div className="placeholder-block">Saved Flight List</div>
-        <div className="results-container">
-          <h2>Available Award Flights</h2>
+      <h2>Your Saved Flights</h2>
+      <div className="results-container">
+        {flights?.map((flight) => (
+          <FlightEntry key={flight.id} {...flight} />
+        ))}
 
-          {flights?.map((flight) => (
-            <FlightEntry key={flight.id} {...flight} />
-          ))}
-
-          {flights.length === 0 && <p>Loading flights...</p>}
-        </div>
+        {flights?.length === 0 && <p>Loading flights...</p>}
       </div>
     </section>
   );
