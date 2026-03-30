@@ -452,13 +452,16 @@ body {
 }
 
 .history-filters {
-  width: min(100%, 430px);
-  margin: 0 auto;
+  width: 100%;
+  margin: 0;
   display: grid;
-  gap: 0.9rem;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-items: end;
+  gap: 1rem;
 }
 
 .history-filters__title {
+  grid-column: 1 / -1;
   margin: 0;
   font-family: "Sora", "Outfit", sans-serif;
   font-size: 1.7rem;
@@ -467,16 +470,16 @@ body {
 
 .history-filter-field {
   display: grid;
-  grid-template-columns: minmax(96px, auto) minmax(0, 1fr);
-  align-items: center;
-  gap: 0.8rem;
+  grid-template-columns: 1fr;
+  align-items: start;
+  gap: 0.35rem;
 }
 
 .history-filter-field span {
   font-size: 0.95rem;
   font-weight: 600;
   color: #1f2937;
-  text-align: right;
+  text-align: left;
 }
 
 .history-filter-field input {

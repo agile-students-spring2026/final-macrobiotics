@@ -103,7 +103,6 @@ function HistoryPage({ onNavigateScreen }) {
         </button>
 
         <header className="history-heading">
-          <p className="history-heading__eyebrow">Search History</p>
           <h2 className="history-heading__title">Recently Searched</h2>
         </header>
 
