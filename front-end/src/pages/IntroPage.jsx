@@ -2,7 +2,7 @@ import { useRef, useState } from "react";
 
 const ACCOUNT_ACTIONS = [
   { id: "signup", label: "Sign up" },
-  { id: "login", label: "Log in" }
+  { id: "login", label: "Log in" },
 ];
 
 const CABIN_OPTIONS = [
@@ -10,7 +10,7 @@ const CABIN_OPTIONS = [
   { value: "economy", label: "Economy" },
   { value: "premium-economy", label: "Premium Economy" },
   { value: "business", label: "Business" },
-  { value: "first", label: "First" }
+  { value: "first", label: "First" },
 ];
 
 const TRAVELER_OPTIONS = [
@@ -21,11 +21,12 @@ const TRAVELER_OPTIONS = [
   { value: "5", label: "5" },
   { value: "6", label: "6" },
   { value: "7", label: "7" },
-  { value: "8", label: "8" }
+  { value: "8", label: "8" },
 ];
 
 function IntroPage({ onNavigateScreen }) {
   const [accountMode, setAccountMode] = useState("signup");
+  const [isAdvancedOpen, setIsAdvancedOpen] = useState(false);
   const dateInputRef = useRef(null);
   const [formValues, setFormValues] = useState({
     from: "",
@@ -34,14 +35,14 @@ function IntroPage({ onNavigateScreen }) {
     date: "",
     airlines: "",
     miles: "",
-    travelers: "1"
+    travelers: "1",
   });
 
   function handleFieldChange(event) {
     const { name, value } = event.target;
     setFormValues((currentValues) => ({
       ...currentValues,
-      [name]: value
+      [name]: value,
     }));
   }
 
@@ -93,7 +94,10 @@ function IntroPage({ onNavigateScreen }) {
           </p>
         </header>
 
-        <form className="intro-form" onSubmit={(event) => event.preventDefault()}>
+        <form
+          className="intro-form"
+          onSubmit={(event) => event.preventDefault()}
+        >
           <div className="intro-form__grid">
             <label className="intro-field">
               <span>From</span>
@@ -125,7 +129,10 @@ function IntroPage({ onNavigateScreen }) {
                 onChange={handleFieldChange}
               >
                 {CABIN_OPTIONS.map((option) => (
-                  <option key={option.value || "placeholder"} value={option.value}>
+                  <option
+                    key={option.value || "placeholder"}
+                    value={option.value}
+                  >
                     {option.label}
                   </option>
                 ))}
@@ -187,7 +194,9 @@ function IntroPage({ onNavigateScreen }) {
                 className="intro-advanced__toggle"
                 aria-expanded={isAdvancedOpen}
                 aria-controls="advanced-options-panel"
-                onClick={() => setIsAdvancedOpen((currentValue) => !currentValue)}
+                onClick={() =>
+                  setIsAdvancedOpen((currentValue) => !currentValue)
+                }
               >
                 <span>Advanced Options</span>
                 <svg
@@ -205,10 +214,7 @@ function IntroPage({ onNavigateScreen }) {
             </h3>
 
             {isAdvancedOpen ? (
-              <div
-                id="advanced-options-panel"
-                className="intro-advanced__grid"
-              >
+              <div id="advanced-options-panel" className="intro-advanced__grid">
                 <label className="intro-field">
                   <span>Airlines</span>
                   <input
@@ -239,7 +245,10 @@ function IntroPage({ onNavigateScreen }) {
                     onChange={handleFieldChange}
                   >
                     {TRAVELER_OPTIONS.map((option) => (
-                      <option key={option.value || "placeholder"} value={option.value}>
+                      <option
+                        key={option.value || "placeholder"}
+                        value={option.value}
+                      >
                         {option.label}
                       </option>
                     ))}
