@@ -13,6 +13,17 @@ const CABIN_OPTIONS = [
   { value: "first", label: "First" }
 ];
 
+const TRAVELER_OPTIONS = [
+  { value: "1", label: "1" },
+  { value: "2", label: "2" },
+  { value: "3", label: "3" },
+  { value: "4", label: "4" },
+  { value: "5", label: "5" },
+  { value: "6", label: "6" },
+  { value: "7", label: "7" },
+  { value: "8", label: "8" }
+];
+
 function IntroPage({ onNavigateScreen }) {
   const [accountMode, setAccountMode] = useState("signup");
   const dateInputRef = useRef(null);
@@ -23,7 +34,7 @@ function IntroPage({ onNavigateScreen }) {
     date: "",
     airlines: "",
     miles: "",
-    travelers: ""
+    travelers: "1"
   });
 
   function handleFieldChange(event) {
@@ -170,42 +181,72 @@ function IntroPage({ onNavigateScreen }) {
           </div>
 
           <div className="intro-advanced">
-            <h3 className="intro-advanced__title">Advanced Options</h3>
+            <h3 className="intro-advanced__title">
+              <button
+                type="button"
+                className="intro-advanced__toggle"
+                aria-expanded={isAdvancedOpen}
+                aria-controls="advanced-options-panel"
+                onClick={() => setIsAdvancedOpen((currentValue) => !currentValue)}
+              >
+                <span>Advanced Options</span>
+                <svg
+                  className="intro-advanced__toggle-icon"
+                  viewBox="0 0 24 24"
+                  aria-hidden="true"
+                  focusable="false"
+                >
+                  <path
+                    d="M6.47 8.97a.75.75 0 0 1 1.06 0L12 13.44l4.47-4.47a.75.75 0 1 1 1.06 1.06l-5 5a.75.75 0 0 1-1.06 0l-5-5a.75.75 0 0 1 0-1.06Z"
+                    fill="currentColor"
+                  />
+                </svg>
+              </button>
+            </h3>
 
-            <div className="intro-advanced__grid">
-              <label className="intro-field">
-                <span>Airlines</span>
-                <input
-                  name="airlines"
-                  type="text"
-                  value={formValues.airlines}
-                  onChange={handleFieldChange}
-                  placeholder="Preferred airlines"
-                />
-              </label>
+            {isAdvancedOpen ? (
+              <div
+                id="advanced-options-panel"
+                className="intro-advanced__grid"
+              >
+                <label className="intro-field">
+                  <span>Airlines</span>
+                  <input
+                    name="airlines"
+                    type="text"
+                    value={formValues.airlines}
+                    onChange={handleFieldChange}
+                    placeholder="Preferred airlines"
+                  />
+                </label>
 
-              <label className="intro-field">
-                <span>Min/Max Miles</span>
-                <input
-                  name="miles"
-                  type="text"
-                  value={formValues.miles}
-                  onChange={handleFieldChange}
-                  placeholder="Mileage range"
-                />
-              </label>
+                <label className="intro-field">
+                  <span>Min/Max Miles</span>
+                  <input
+                    name="miles"
+                    type="text"
+                    value={formValues.miles}
+                    onChange={handleFieldChange}
+                    placeholder="Mileage range"
+                  />
+                </label>
 
-              <label className="intro-field">
-                <span>Num of Travellers</span>
-                <input
-                  name="travelers"
-                  type="text"
-                  value={formValues.travelers}
-                  onChange={handleFieldChange}
-                  placeholder="Passenger count"
-                />
-              </label>
-            </div>
+                <label className="intro-field">
+                  <span>Num of Travellers</span>
+                  <select
+                    name="travelers"
+                    value={formValues.travelers}
+                    onChange={handleFieldChange}
+                  >
+                    {TRAVELER_OPTIONS.map((option) => (
+                      <option key={option.value || "placeholder"} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              </div>
+            ) : null}
           </div>
         </form>
       </div>
