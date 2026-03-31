@@ -1,28 +1,67 @@
-import { useState, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import FlightEntry from "../components/FlightEntry";
-
-const MOCK_FLIGHTS = [
-  { id: 1, airline: "Delta", flightNo: "DL1131", depAirport: "SFO", arrAirport: "JFK", dep: "06:30", arr: "09:30", durationMin: 330, stops: 0, miles: 36000, logoUrl: "" },
-  { id: 2, airline: "United", flightNo: "UA823", depAirport: "SFO", arrAirport: "JFK", dep: "08:00", arr: "16:45", durationMin: 525, stops: 1, miles: 28000, logoUrl: "" },
-  { id: 3, airline: "American", flightNo: "AA301", depAirport: "SFO", arrAirport: "JFK", dep: "09:15", arr: "17:50", durationMin: 515, stops: 0, miles: 42000, logoUrl: "" },
-];
 
 function SearchResultsPage({onSelectFlight}) {
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
   const [date, setDate] = useState("");
+  const [flights, setFlights] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState("");
   const [airFilter, setAirFilter] = useState([]);
   const [stopsFilter, setStopsFilter] = useState([]);
   const [sortBy, setSortBy] = useState("miles");
   const toggleFilter = (arr, setArr, val) => setArr(arr.includes(val) ? arr.filter(x => x !== val) : [...arr, val]);
 
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadFlights() {
+      try {
+        const response = await fetch("/mock/search-results.json");
+
+        if (!response.ok) {
+          throw new Error("Unable to load search results.");
+        }
+
+        const searchResults = await response.json();
+
+        if (isMounted) {
+          setFlights(searchResults);
+          setLoadError("");
+        }
+      } catch (error) {
+        if (isMounted) {
+          setFlights([]);
+          setLoadError("Unable to load search results.");
+        }
+      } finally {
+        if (isMounted) {
+          setIsLoading(false);
+        }
+      }
+    }
+
+    loadFlights();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  const airlineOptions = useMemo(() => {
+    return [...new Set(flights.map((flight) => flight.airline))];
+  }, [flights]);
+
   const filtered = useMemo(() => {
-    let f = MOCK_FLIGHTS;
+    let f = flights;
     if (airFilter.length) f = f.filter(x => airFilter.includes(x.airline));
     if (stopsFilter.includes("Nonstop")) f = f.filter(x => x.stops === 0);
     if (stopsFilter.includes("1 Stop")) f = f.filter(x => x.stops === 1);
+    if (stopsFilter.includes("2+ Stops")) f = f.filter(x => x.stops >= 2);
     return [...f].sort((a, b) => sortBy === "miles" ? a.miles - b.miles : a.durationMin - b.durationMin);
-  })
+  }, [airFilter, flights, sortBy, stopsFilter]);
+
   return (
     <section className="screen">
       <h2>Search Results Screen</h2>
@@ -37,7 +76,7 @@ function SearchResultsPage({onSelectFlight}) {
 
         <div className="sort-filter">
           <p>Airlines</p>
-          {["Delta", "United", "American"].map(a => (
+          {airlineOptions.map(a => (
             <label key={a}>
               <input type="checkbox" checked={airFilter.includes(a)} onChange={() => toggleFilter(airFilter, setAirFilter, a)}/> {a}
             </label>
@@ -55,7 +94,9 @@ function SearchResultsPage({onSelectFlight}) {
           </select>
         </div>
         <div className="results-list">
-          {filtered.map(flight => (
+          {isLoading ? <p>Loading search results...</p> : null}
+          {!isLoading && loadError ? <p>{loadError}</p> : null}
+          {!isLoading && !loadError ? filtered.map(flight => (
             <div key={flight.id} onClick={() => onSelectFlight(flight)}>
               <FlightEntry
                 key={flight.id}
@@ -63,14 +104,15 @@ function SearchResultsPage({onSelectFlight}) {
                 departureAirport={flight.depAirport}
                 arrivalTime={flight.arr}
                 arrivalAirport={flight.arrAirport}
-                duration={`${Math.floor(flight.durationMin / 60)}h${flight.durationMin % 60}min`}
+                duration={`${Math.floor(flight.durationMin / 60)}h ${flight.durationMin % 60}m`}
                 flightNumber={flight.flightNo}
                 miles={flight.miles.toLocaleString()}
                 logoUrl={flight.logoUrl || ""}
                 onClick={() => onSelectFlight(flight)}
               />
             </div>
-          ))}
+          )) : null}
+          {!isLoading && !loadError && filtered.length === 0 ? <p>No flights match the current filters.</p> : null}
         </div>
       </div>
     </section>
