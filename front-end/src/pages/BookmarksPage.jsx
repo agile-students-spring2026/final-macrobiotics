@@ -60,7 +60,7 @@ const BookmarksPage = () => {
   return (
     <section className="screen">
       <h2>Your Saved Flights</h2>
-      <div className="results-container">
+      <div className="bookmarks-results-container">
         {flights?.map((flight) => (
           <FlightEntry key={flight.id} {...flight} />
         ))}
