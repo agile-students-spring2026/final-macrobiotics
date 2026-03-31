@@ -758,6 +758,161 @@ body {
   font-weight: 500;
 }
 
+.search-results-screen {
+  display: flex;
+  justify-content: center;
+}
+
+.search-results-panel {
+  width: min(100%, 900px);
+  border: 1px solid #d7dee8;
+  border-radius: 1.5rem;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.98) 0%,
+    rgba(245, 248, 252, 0.98) 100%
+  );
+  box-shadow:
+    0 18px 50px rgba(19, 32, 53, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.85);
+  padding: 1.25rem;
+  display: grid;
+  gap: 1.5rem;
+}
+
+.search-results-heading {
+  text-align: center;
+  display: grid;
+  gap: 0.5rem;
+}
+
+.search-results-heading__eyebrow {
+  margin: 0;
+  font-size: 0.82rem;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: #556175;
+}
+
+.search-results-heading__title {
+  margin: 0;
+  font-family: "Sora", "Outfit", sans-serif;
+  font-size: clamp(2.3rem, 8vw, 3.6rem);
+  line-height: 1.02;
+}
+
+.search-results-heading__copy {
+  width: min(100%, 580px);
+  margin: 0 auto;
+  font-size: 0.98rem;
+  line-height: 1.6;
+}
+
+.search-results-form {
+  display: grid;
+  gap: 1rem;
+}
+
+.search-results-form__grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1rem;
+  align-items: end;
+}
+
+.search-results-form__grid > * {
+  min-width: 0;
+}
+
+.search-results-form__action {
+  align-self: stretch;
+}
+
+.search-results-form__action-label {
+  visibility: hidden;
+}
+
+.search-results-form__action .intro-primary-button {
+  width: 100%;
+}
+
+.search-results-form input[type="date"] {
+  min-width: 0;
+}
+
+.search-results-filters {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.search-results-advanced {
+  display: grid;
+  gap: 1rem;
+  padding-top: 0.25rem;
+}
+
+.search-results-advanced__title {
+  margin: 0;
+}
+
+.search-results-filter-card {
+  border: 1px solid #d8e1eb;
+  border-radius: 1rem;
+  background: rgba(255, 255, 255, 0.72);
+  padding: 1rem;
+  display: grid;
+  gap: 0.85rem;
+}
+
+.search-results-filter-card__title {
+  margin: 0;
+  font-family: "Sora", "Outfit", sans-serif;
+  font-size: 1rem;
+}
+
+.search-results-filter-card--sort {
+  align-content: start;
+}
+
+.search-results-option-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.7rem;
+}
+
+.search-results-option {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  min-height: 2.9rem;
+  padding: 0.7rem 0.9rem;
+  border: 1px solid #d3dfeb;
+  border-radius: 999px;
+  background: #f4f8fb;
+  color: var(--text);
+  font-size: 0.94rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.search-results-option input {
+  margin: 0;
+  accent-color: var(--accent);
+}
+
+.search-results-list {
+  display: grid;
+  gap: 1rem;
+  justify-items: center;
+}
+
+.search-results-list__item {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+
 .placeholder-grid {
   display: grid;
   gap: 0.7rem;
@@ -968,6 +1123,11 @@ body {
     border-radius: 1.2rem;
   }
 
+  .search-results-panel {
+    padding: 1rem;
+    border-radius: 1.2rem;
+  }
+
   .intro-actions {
     width: 100%;
   }
@@ -979,6 +1139,11 @@ body {
   .intro-form__grid,
   .intro-advanced__grid,
   .intro-form__actions {
+    grid-template-columns: 1fr;
+  }
+
+  .search-results-form__grid,
+  .search-results-filters {
     grid-template-columns: 1fr;
   }
 
@@ -1013,6 +1178,15 @@ body {
   .history-card__miles {
     width: 100%;
     text-align: center;
+  }
+
+  .search-results-option-list {
+    flex-direction: column;
+  }
+
+  .search-results-option {
+    width: 100%;
+    justify-content: flex-start;
   }
 }
 
@@ -1057,6 +1231,10 @@ body {
   }
 
   .history-panel {
+    padding: 1.6rem 1.8rem 1.8rem;
+  }
+
+  .search-results-panel {
     padding: 1.6rem 1.8rem 1.8rem;
   }
 }
