@@ -1,3 +1,83 @@
+function formatDuration(durationValue) {
+  if (!durationValue) {
+    return "";
+  }
+
+  return durationValue.replace(/\s+/g, "");
+}
+
+function formatDurationFromMinutes(minutes) {
+  if (!Number.isFinite(minutes)) {
+    return "";
+  }
+
+  const hours = Math.floor(minutes / 60);
+  const remainder = minutes % 60;
+
+  if (remainder === 0) {
+    return `${hours}h`;
+  }
+
+  return `${hours}h ${remainder}m`;
+}
+
+function getStopSummary(flight) {
+  if (!flight?.stops) {
+    return "Nonstop";
+  }
+
+  return `${flight.stops} Stop${flight.stops > 1 ? "s" : ""}`;
+}
+
+function getViaLabel(flight) {
+  if (!flight?.stops || !flight?.itinerary?.length) {
+    return "Direct routing";
+  }
+
+  const firstStop = flight.itinerary[0]?.arrA;
+  return firstStop ? `Via ${firstStop}` : "Connecting itinerary";
+}
+
+function RouteBlock({
+  departureTime,
+  departureAirport,
+  arrivalTime,
+  arrivalAirport,
+  duration,
+  metaLabel,
+  footLabel,
+}) {
+  return (
+    <div className="search-detail-route-block">
+      <div className="search-detail-route-block__times">
+        <span className="search-detail-time">{departureTime}</span>
+        <span className="search-detail-route-duration">{duration}</span>
+        <span className="search-detail-time search-detail-time--arrival">
+          {arrivalTime}
+        </span>
+      </div>
+
+      <div className="search-detail-route-block__airports">
+        <span className="search-detail-airport">{departureAirport}</span>
+        <div className="search-detail-route-arrow" aria-hidden="true">
+          <span className="search-detail-route-arrow-line" />
+          <span className="search-detail-route-arrow-head">{">"}</span>
+        </div>
+        <span className="search-detail-airport search-detail-airport--arrival">
+          {arrivalAirport}
+        </span>
+      </div>
+
+      <div className="search-detail-route-block__meta">
+        <span className="search-detail-route-stop">{metaLabel}</span>
+        {footLabel ? (
+          <span className="search-detail-flight-number">{footLabel}</span>
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
 function SearchDetailPage({ flight, onNavigateScreen }) {
   function handleBackClick() {
     if (onNavigateScreen) {
@@ -5,44 +85,113 @@ function SearchDetailPage({ flight, onNavigateScreen }) {
     }
   }
 
-  if (!flight) return <p>No flight selected.</p>;
+  if (!flight) {
+    return (
+      <section className="screen search-detail-screen">
+        <div className="search-detail-panel">
+          <div className="history-empty-state">No flight selected.</div>
+        </div>
+      </section>
+    );
+  }
 
   return (
-    <section className="screen">
-      <button onClick={handleBackClick}> Back </button>
-      <h2>Search Result Detail Screen</h2>
-      <p>Placeholder for itinerary breakdown and booking action.</p>
-      <div className="placeholder-grid">
-        <div className="Flight Header">
-          <h3>{flight.flightNo}</h3>
-          <p>
-            {flight.depAirport} - {flight.arrAirport}
-          </p>
-          <p>
-            {flight.dep} - {flight.arr}
-          </p>
-          <p>
-            {flight.class} . {flight.airline}
-          </p>
-        </div>
-
-        <div className="Itinerary Timeline">
-          {flight.itinerary.map((seg, i) => (
-            <div key={i}>
-              <p>
-                {seg.depA} {seg.dep} - {seg.arrA} {seg.arr} ({seg.dur})
-              </p>
-              {seg.layover && <p>Layover: {seg.layover}</p>}
-            </div>
-          ))}
-        </div>
-
-        <div className="Book Flight Action">
-          <p>Total: {flight.miles.toLocaleString()} miles</p>
-          <button onClick={() => alert("Booking via ${flight.airline}")}>
-            Book Via {flight.airline}
+    <section className="screen search-detail-screen">
+      <div className="search-detail-panel">
+        <div className="search-detail-topbar">
+          <button
+            type="button"
+            className="search-detail-back-button"
+            onClick={handleBackClick}
+          >
+            Back
           </button>
         </div>
+
+        <header className="search-detail-header">
+          <p className="search-detail-header__eyebrow">Flight Details</p>
+          <h2 className="search-detail-header__title">
+            {flight.depAirport} to {flight.arrAirport}
+          </h2>
+          <p className="search-detail-header__copy">
+            Review the itinerary, stop pattern, and mileage cost before booking.
+          </p>
+        </header>
+
+        <section className="search-detail-hero">
+          <RouteBlock
+            departureTime={flight.dep}
+            departureAirport={flight.depAirport}
+            arrivalTime={flight.arr}
+            arrivalAirport={flight.arrAirport}
+            duration={formatDurationFromMinutes(flight.durationMin)}
+            metaLabel={getViaLabel(flight)}
+          />
+
+          <div className="search-detail-meta">
+            <span className="history-card__chip">{flight.class}</span>
+            <span className="history-card__chip">{flight.airline}</span>
+            <span className="history-card__chip">{flight.flightNo}</span>
+            <span className="history-card__chip">{getStopSummary(flight)}</span>
+          </div>
+        </section>
+
+        <section className="search-detail-itinerary">
+          <div className="search-detail-section-heading">
+            <h3 className="search-detail-section-heading__title">Itinerary</h3>
+            <p className="search-detail-section-heading__copy">
+              Segment-by-segment routing for this award option.
+            </p>
+          </div>
+
+          <div className="search-detail-segments">
+            {flight.itinerary.map((segment, index) => (
+              <div key={`${segment.depA}-${segment.arrA}-${index}`}>
+                <article className="search-detail-segment">
+                  <div className="search-detail-segment__badge">
+                    Segment {index + 1}
+                  </div>
+
+                  <RouteBlock
+                    departureTime={segment.dep}
+                    departureAirport={segment.depA}
+                    arrivalTime={segment.arr}
+                    arrivalAirport={segment.arrA}
+                    duration={formatDuration(segment.dur)}
+                    metaLabel={index === 0 ? "Operating segment" : "Connection"}
+                    footLabel={`${flight.airline} ${flight.flightNo}`}
+                  />
+                </article>
+
+                {segment.layover ? (
+                  <p className="search-detail-layover">Layover: {segment.layover}</p>
+                ) : null}
+              </div>
+            ))}
+          </div>
+        </section>
+
+        <section className="search-detail-actions">
+          <div className="search-detail-actions__summary">
+            <span className="search-detail-actions__label">Total Award Cost</span>
+            <p className="search-detail-total">
+              {flight.miles.toLocaleString()} Miles
+            </p>
+          </div>
+
+          <div className="search-detail-actions__row">
+            <button type="button" className="search-detail-bookmark-button">
+              Save
+            </button>
+            <button
+              type="button"
+              className="search-detail-book-button"
+              onClick={() => alert(`Booking via ${flight.airline}`)}
+            >
+              Book via {flight.airline}
+            </button>
+          </div>
+        </section>
       </div>
     </section>
   );
