@@ -76,5 +76,4 @@ function SearchResultsPage({onSelectFlight}) {
     </section>
   );
 }
-
 export default SearchResultsPage;
