@@ -15,7 +15,7 @@ const SCREENS = [
   { id: "search-detail", label: "Search Detail" },
   { id: "bookmarks", label: "Bookmarks" },
   { id: "settings", label: "Settings" },
-  { id: "history", label: "History" }
+  { id: "history", label: "History" },
 ];
 
 const SCREEN_COMPONENTS = {
@@ -25,16 +25,22 @@ const SCREEN_COMPONENTS = {
   "search-detail": SearchDetailPage,
   bookmarks: BookmarksPage,
   settings: SettingsPage,
-  history: HistoryPage
+  history: HistoryPage,
 };
 
 function App() {
   const [activeScreen, setActiveScreen] = useState("intro");
+  const [selectedFlight, setSelectedFlight] = useState(null);
 
   const ActiveScreen = useMemo(
     () => SCREEN_COMPONENTS[activeScreen] ?? IntroPage,
-    [activeScreen]
+    [activeScreen],
   );
+
+  const handleSelectFlight = (flightData) => {
+    setSelectedFlight(flightData);
+    setActiveScreen("search-detail");
+  };
 
   return (
     <AppFrame
@@ -42,7 +48,11 @@ function App() {
       activeScreen={activeScreen}
       onChangeScreen={setActiveScreen}
     >
-      <ActiveScreen onNavigateScreen={setActiveScreen} />
+      <ActiveScreen
+        onNavigateScreen={setActiveScreen}
+        onSelectFlight={handleSelectFlight}
+        flight={selectedFlight}
+      />
     </AppFrame>
   );
 }
