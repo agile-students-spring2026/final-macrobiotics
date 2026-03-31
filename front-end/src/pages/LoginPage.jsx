@@ -1,9 +1,15 @@
 import { useState } from "react";
 
-function LoginPage(){
+function LoginPage({ onGoBack }){
 
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
+
+    function handleContinue() {
+        if (onGoBack) {
+            onGoBack("intro");
+        }
+    }
 
     return(
 
@@ -11,7 +17,13 @@ function LoginPage(){
 
             <div className ="login-panel">
 
-                <h2> Sign Up or Log In</h2>
+                <header className="login-header">
+                    <p className="login-header__eyebrow">Account access</p>
+                    <h2 className="login-header__title">Sign Up or Log In</h2>
+                    <p className="login-header__copy">
+                        Continue with your email or use your organization&apos;s single sign-on.
+                    </p>
+                </header>
 
                 <div className="details">
                     
@@ -37,11 +49,19 @@ function LoginPage(){
 
                 <div className="login-buttons">
 
-                    <button className="default-login-button" type="button">
+                    <button
+                        className="default-login-button"
+                        type="button"
+                        onClick={handleContinue}
+                    >
                         Sign Up or Log In
                     </button>
 
-                    <button className="sso-login-button" type="button">
+                    <button
+                        className="sso-login-button"
+                        type="button"
+                        onClick={handleContinue}
+                    >
                         Sign In With SSO
                     </button>
 

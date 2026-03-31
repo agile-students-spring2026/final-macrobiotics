@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import ScreenQuickActions from "../components/ScreenQuickActions";
 
 const DATE_FORMATTER = new Intl.DateTimeFormat("en-US", {
   month: "short",
@@ -16,7 +17,7 @@ function formatDate(dateString) {
   return DATE_FORMATTER.format(date);
 }
 
-function HistoryPage({ onNavigateScreen }) {
+function HistoryPage({ activeScreen, onNavigateScreen, onGoBack }) {
   const [filters, setFilters] = useState({
     airline: "",
     destination: "",
@@ -86,21 +87,28 @@ function HistoryPage({ onNavigateScreen }) {
   }
 
   function handleBackClick() {
-    if (onNavigateScreen) {
-      onNavigateScreen("intro");
+    if (onGoBack) {
+      onGoBack("intro");
     }
   }
 
   return (
     <section className="screen history-screen">
       <div className="history-panel">
-        <button
-          type="button"
-          className="history-back-button"
-          onClick={handleBackClick}
-        >
-          Back
-        </button>
+        <div className="panel-utility-row panel-utility-row--split">
+          <button
+            type="button"
+            className="history-back-button"
+            onClick={handleBackClick}
+          >
+            Back
+          </button>
+
+          <ScreenQuickActions
+            activeScreen={activeScreen}
+            onNavigateScreen={onNavigateScreen}
+          />
+        </div>
 
         <header className="history-heading">
           <h2 className="history-heading__title">Recently Searched</h2>

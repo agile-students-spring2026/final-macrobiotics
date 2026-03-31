@@ -30,6 +30,7 @@ const SCREEN_COMPONENTS = {
 
 function App() {
   const [activeScreen, setActiveScreen] = useState("intro");
+  const [navigationHistory, setNavigationHistory] = useState([]);
   const [selectedFlight, setSelectedFlight] = useState(null);
 
   const ActiveScreen = useMemo(
@@ -37,19 +38,43 @@ function App() {
     [activeScreen],
   );
 
+  function handleNavigateScreen(nextScreen) {
+    if (!nextScreen || nextScreen === activeScreen) {
+      return;
+    }
+
+    setNavigationHistory((currentHistory) => [...currentHistory, activeScreen]);
+    setActiveScreen(nextScreen);
+  }
+
+  function handleGoBack(fallbackScreen = "intro") {
+    if (navigationHistory.length > 0) {
+      const previousScreen = navigationHistory[navigationHistory.length - 1];
+      setNavigationHistory((currentHistory) => currentHistory.slice(0, -1));
+      setActiveScreen(previousScreen);
+      return;
+    }
+
+    if (fallbackScreen && fallbackScreen !== activeScreen) {
+      setActiveScreen(fallbackScreen);
+    }
+  }
+
   const handleSelectFlight = (flightData) => {
     setSelectedFlight(flightData);
-    setActiveScreen("search-detail");
+    handleNavigateScreen("search-detail");
   };
 
   return (
     <AppFrame
       screens={SCREENS}
       activeScreen={activeScreen}
-      onChangeScreen={setActiveScreen}
+      onChangeScreen={handleNavigateScreen}
     >
       <ActiveScreen
-        onNavigateScreen={setActiveScreen}
+        activeScreen={activeScreen}
+        onNavigateScreen={handleNavigateScreen}
+        onGoBack={handleGoBack}
         onSelectFlight={handleSelectFlight}
         flight={selectedFlight}
       />

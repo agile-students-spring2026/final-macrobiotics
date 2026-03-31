@@ -1,6 +1,13 @@
 import { useEffect, useMemo, useState } from "react";
 import FlightEntry from "../components/FlightEntry";
-function SearchResultsPage({ onSelectFlight }) {
+import ScreenQuickActions from "../components/ScreenQuickActions";
+
+function SearchResultsPage({
+  activeScreen,
+  onGoBack,
+  onNavigateScreen,
+  onSelectFlight,
+}) {
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
   const [date, setDate] = useState("");
@@ -70,6 +77,21 @@ function SearchResultsPage({ onSelectFlight }) {
   return (
     <section className="screen search-results-screen">
       <div className="search-results-panel">
+        <div className="panel-utility-row panel-utility-row--split">
+          <button
+            type="button"
+            className="history-back-button"
+            onClick={() => onGoBack && onGoBack("intro")}
+          >
+            Back
+          </button>
+
+          <ScreenQuickActions
+            activeScreen={activeScreen}
+            onNavigateScreen={onNavigateScreen}
+          />
+        </div>
+
         <header className="search-results-heading">
           <p className="search-results-heading__eyebrow">Award travel options</p>
           <h2 className="search-results-heading__title">Search Results</h2>

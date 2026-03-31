@@ -1,4 +1,5 @@
 import { useState } from "react";
+import ScreenQuickActions from "../components/ScreenQuickActions";
 
 const DEFAULT_PREFERENCES = [
   { id: "airport", label: "Default Airport", value: "JFK" },
@@ -6,7 +7,7 @@ const DEFAULT_PREFERENCES = [
   { id: "card", label: "Default Credit Card", value: "Chase Sapphire Preferred" }
 ];
 
-function SettingsPage() {
+function SettingsPage({ activeScreen, onGoBack, onNavigateScreen }) {
   const [showDefaultPreferences, setShowDefaultPreferences] = useState(false);
   const [activePreference, setActivePreference] = useState(null);
   const [activeAccountAction, setActiveAccountAction] = useState(null);
@@ -34,9 +35,29 @@ function SettingsPage() {
   };
 
   return (
-    <section className="screen">
-      <h2>Settings Screen</h2>
-      <p>Manage your account details and choose the defaults you want ready for every search.</p>
+    <section className="screen settings-screen">
+      <div className="panel-utility-row panel-utility-row--split">
+        <button
+          type="button"
+          className="history-back-button"
+          onClick={() => onGoBack && onGoBack("intro")}
+        >
+          Back
+        </button>
+
+        <ScreenQuickActions
+          activeScreen={activeScreen}
+          onNavigateScreen={onNavigateScreen}
+        />
+      </div>
+
+      <header className="settings-header">
+        <p className="settings-header__eyebrow">Preferences and account</p>
+        <h2 className="settings-header__title">Settings</h2>
+        <p className="settings-header__copy">
+          Manage your account details and choose the defaults you want ready for every search.
+        </p>
+      </header>
 
       <div className="settings-grid">
         <div className="settings-card">

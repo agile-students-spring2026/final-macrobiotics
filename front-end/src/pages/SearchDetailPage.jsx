@@ -78,10 +78,10 @@ function RouteBlock({
   );
 }
 
-function SearchDetailPage({ flight, onNavigateScreen }) {
+function SearchDetailPage({ activeScreen, flight, onGoBack, onNavigateScreen }) {
   function handleBackClick() {
-    if (onNavigateScreen) {
-      onNavigateScreen("search-results");
+    if (onGoBack) {
+      onGoBack("search-results");
     }
   }
 
@@ -106,6 +106,11 @@ function SearchDetailPage({ flight, onNavigateScreen }) {
           >
             Back
           </button>
+
+          <ScreenQuickActions
+            activeScreen={activeScreen}
+            onNavigateScreen={onNavigateScreen}
+          />
         </div>
 
         <header className="search-detail-header">
@@ -198,3 +203,4 @@ function SearchDetailPage({ flight, onNavigateScreen }) {
 }
 
 export default SearchDetailPage;
+import ScreenQuickActions from "../components/ScreenQuickActions";

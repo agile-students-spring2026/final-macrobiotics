@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from "react";
 import FlightEntry from "../components/FlightEntry";
+import ScreenQuickActions from "../components/ScreenQuickActions";
 
-const BookmarksPage = () => {
+const BookmarksPage = ({ activeScreen, onGoBack, onNavigateScreen }) => {
   // const mockApiData = [
   //   {
   //     id: "1",
@@ -58,8 +59,30 @@ const BookmarksPage = () => {
   }, []);
 
   return (
-    <section className="screen">
-      <h2>Your Saved Flights</h2>
+    <section className="screen bookmarks-screen">
+      <div className="panel-utility-row panel-utility-row--split">
+        <button
+          type="button"
+          className="history-back-button"
+          onClick={() => onGoBack && onGoBack("intro")}
+        >
+          Back
+        </button>
+
+        <ScreenQuickActions
+          activeScreen={activeScreen}
+          onNavigateScreen={onNavigateScreen}
+        />
+      </div>
+
+      <header className="bookmarks-header">
+        <p className="bookmarks-header__eyebrow">Saved award options</p>
+        <h2 className="bookmarks-header__title">Bookmarks</h2>
+        <p className="bookmarks-header__copy">
+          Keep your shortlisted flights here so they are easy to compare later.
+        </p>
+      </header>
+
       <div className="bookmarks-results-container">
         {flights?.map((flight) => (
           <FlightEntry key={flight.id} {...flight} />
