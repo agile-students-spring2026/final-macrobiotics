@@ -8,6 +8,14 @@ function SearchResultsPage({onSelectFlight}) {
   const [stopsFilter, setStopsFilter] = useState([]);
   const [sortBy, setSortBy] = useState("miles");
   const toggleFilter = (arr, setArr, val) => setArr(arr.includes(val) ? arr.filter(x => x !== val) : [...arr, val]);
+
+  const filtered = useMemo(() => {
+    let f = MOCK_FLIGHTS;
+    if (airFilter.length) f = f.filter(x => airFilter.includes(x.airline));
+    if (stopsFilter.includes("Nonstop")) f = f.filter(x => x.stops === 0);
+    if (stopsFilter.includes("1 Stop")) f = f.filter(x => x.stops === 1);
+    return [...f].sort((a, b) => sortBy === "miles" ? a.miles - b.miles : a.durationMin - b.durationMin);
+  })
   return (
     <section className="screen">
       <h2>Search Results Screen</h2>
