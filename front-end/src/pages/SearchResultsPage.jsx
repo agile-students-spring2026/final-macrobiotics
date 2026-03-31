@@ -1,4 +1,11 @@
 import { useState, useMemo } from "react";
+import FlightEntry from "../components/FlightEntry";
+
+const MOCK_FLIGHTS = [
+  { id: 1, airline: "Delta", flightNo: "DL1131", depAirport: "SFO", arrAirport: "JFK", dep: "06:30", arr: "09:30", durationMin: 330, stops: 0, miles: 36000, logoUrl: "" },
+  { id: 2, airline: "United", flightNo: "UA823", depAirport: "SFO", arrAirport: "JFK", dep: "08:00", arr: "16:45", durationMin: 525, stops: 1, miles: 28000, logoUrl: "" },
+  { id: 3, airline: "American", flightNo: "AA301", depAirport: "SFO", arrAirport: "JFK", dep: "09:15", arr: "17:50", durationMin: 515, stops: 0, miles: 42000, logoUrl: "" },
+];
 
 function SearchResultsPage({onSelectFlight}) {
   const [from, setFrom] = useState("");
@@ -49,12 +56,20 @@ function SearchResultsPage({onSelectFlight}) {
         </div>
         <div className="results-list">
           {filtered.map(flight => (
-            <div key={flight.id} onClick={() => onSelectFlight(flight)} className="flight-row">
-              <span>{flight.flightNo}</span>
-              <span>{flight.depAirport} &rarr {flight.arrAirport}</span>
-              <span>{flight.dep} - {flight.arr}</span>
-              <span>{flight.miles.toLocaleString()} miles</span>
-            </div> 
+            <div key={flight.id} onClick={() => onSelectFlight(flight)}>
+              <FlightEntry
+                key={flight.id}
+                departureTime={flight.dep}
+                departureAirport={flight.depAirport}
+                arrivalTime={flight.arr}
+                arrivalAirport={flight.arrAirport}
+                duration={`${Math.floor(flight.durationMin / 60)}h${flight.durationMin % 60}min`}
+                flightNumber={flight.flightNo}
+                miles={flight.miles.toLocaleString()}
+                logoUrl={flight.logoUrl || ""}
+                onClick={() => onSelectFlight(flight)}
+              />
+            </div>
           ))}
         </div>
       </div>
