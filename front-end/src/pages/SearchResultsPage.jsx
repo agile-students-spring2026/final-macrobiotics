@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
 import FlightEntry from "../components/FlightEntry";
-
 function SearchResultsPage({ onSelectFlight }) {
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
