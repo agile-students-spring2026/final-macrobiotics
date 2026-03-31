@@ -122,6 +122,9 @@ typings/
 # next.js build output
 .next
 
+# Frontend build output
+front-end/dist/
+
 
 ## Emacs artefacts ##
 *~
