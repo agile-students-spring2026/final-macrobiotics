@@ -462,6 +462,64 @@ body {
   background: #e5ebf2;
 }
 
+.panel-utility-row {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+}
+
+.panel-utility-row--split {
+  justify-content: space-between;
+}
+
+.panel-utility-row--end {
+  justify-content: flex-end;
+}
+
+.screen-quick-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.screen-quick-actions__button {
+  width: 2.9rem;
+  height: 2.9rem;
+  border: 1px solid #c2cfdd;
+  border-radius: 999px;
+  background: #eef4fa;
+  color: #365272;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition:
+    transform 150ms ease,
+    background-color 150ms ease,
+    border-color 150ms ease,
+    box-shadow 150ms ease;
+}
+
+.screen-quick-actions__button:hover:not(:disabled) {
+  transform: translateY(-1px);
+  background: #f5f9fd;
+  border-color: #aabed3;
+  box-shadow: 0 10px 18px rgba(31, 106, 165, 0.12);
+}
+
+.screen-quick-actions__button.is-active,
+.screen-quick-actions__button:disabled {
+  background: linear-gradient(135deg, #dcecff 0%, #edf4fb 100%);
+  border-color: #8fb4d6;
+  color: #1f6aa5;
+  cursor: default;
+}
+
+.screen-quick-actions__button svg {
+  width: 1.2rem;
+  height: 1.2rem;
+}
+
 .history-heading {
   text-align: center;
   display: grid;
@@ -758,6 +816,460 @@ body {
   font-weight: 500;
 }
 
+.search-results-screen {
+  display: flex;
+  justify-content: center;
+}
+
+.search-results-panel {
+  width: min(100%, 900px);
+  border: 1px solid #d7dee8;
+  border-radius: 1.5rem;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.98) 0%,
+    rgba(245, 248, 252, 0.98) 100%
+  );
+  box-shadow:
+    0 18px 50px rgba(19, 32, 53, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.85);
+  padding: 1.25rem;
+  display: grid;
+  gap: 1.5rem;
+}
+
+.search-results-heading {
+  text-align: center;
+  display: grid;
+  gap: 0.5rem;
+}
+
+.search-results-heading__eyebrow {
+  margin: 0;
+  font-size: 0.82rem;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: #556175;
+}
+
+.search-results-heading__title {
+  margin: 0;
+  font-family: "Sora", "Outfit", sans-serif;
+  font-size: clamp(2.3rem, 8vw, 3.6rem);
+  line-height: 1.02;
+}
+
+.search-results-heading__copy {
+  width: min(100%, 580px);
+  margin: 0 auto;
+  font-size: 0.98rem;
+  line-height: 1.6;
+}
+
+.search-results-form {
+  display: grid;
+  gap: 1rem;
+}
+
+.search-results-form__grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1rem;
+  align-items: end;
+}
+
+.search-results-form__grid > * {
+  min-width: 0;
+}
+
+.search-results-form__action {
+  align-self: stretch;
+}
+
+.search-results-form__action-label {
+  visibility: hidden;
+}
+
+.search-results-form__action .intro-primary-button {
+  width: 100%;
+}
+
+.search-results-form input[type="date"] {
+  min-width: 0;
+}
+
+.search-results-filters {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.search-results-advanced {
+  display: grid;
+  gap: 1rem;
+  padding-top: 0.25rem;
+}
+
+.search-results-advanced__title {
+  margin: 0;
+}
+
+.search-results-filter-card {
+  border: 1px solid #d8e1eb;
+  border-radius: 1rem;
+  background: rgba(255, 255, 255, 0.72);
+  padding: 1rem;
+  display: grid;
+  gap: 0.85rem;
+}
+
+.search-results-filter-card__title {
+  margin: 0;
+  font-family: "Sora", "Outfit", sans-serif;
+  font-size: 1rem;
+}
+
+.search-results-filter-card--sort {
+  align-content: start;
+}
+
+.search-results-option-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.7rem;
+}
+
+.search-results-option {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  min-height: 2.9rem;
+  padding: 0.7rem 0.9rem;
+  border: 1px solid #d3dfeb;
+  border-radius: 999px;
+  background: #f4f8fb;
+  color: var(--text);
+  font-size: 0.94rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.search-results-option input {
+  margin: 0;
+  accent-color: var(--accent);
+}
+
+.search-results-list {
+  display: grid;
+  gap: 1rem;
+  justify-items: center;
+}
+
+.search-results-list__item {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+
+.search-detail-screen {
+  display: flex;
+  justify-content: center;
+}
+
+.search-detail-panel {
+  width: min(100%, 720px);
+  border: 1px solid #d7dee8;
+  border-radius: 1.5rem;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.98) 0%,
+    rgba(243, 247, 251, 0.98) 100%
+  );
+  box-shadow:
+    0 18px 50px rgba(19, 32, 53, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.85);
+  padding: 1.25rem;
+  display: grid;
+  gap: 1.5rem;
+}
+
+.search-detail-topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.search-detail-back-button {
+  width: fit-content;
+  border: 1px solid #c2cfdd;
+  background: #eef4fa;
+  color: var(--text);
+  border-radius: 0.85rem;
+  padding: 0.75rem 1rem;
+  font: inherit;
+  font-size: 1rem;
+  cursor: pointer;
+  transition:
+    background-color 150ms ease,
+    transform 150ms ease,
+    box-shadow 150ms ease;
+}
+
+.search-detail-back-button:hover {
+  transform: translateY(-1px);
+  background: #f5f9fd;
+}
+
+.search-detail-header {
+  text-align: center;
+  display: grid;
+  gap: 0.45rem;
+}
+
+.search-detail-header__eyebrow {
+  margin: 0;
+  font-size: 0.82rem;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: #556175;
+}
+
+.search-detail-header__title {
+  margin: 0;
+  font-family: "Sora", "Outfit", sans-serif;
+  font-size: clamp(2.2rem, 8vw, 3.4rem);
+  line-height: 1.02;
+}
+
+.search-detail-header__copy {
+  width: min(100%, 520px);
+  margin: 0 auto;
+  font-size: 0.98rem;
+  line-height: 1.6;
+}
+
+.search-detail-hero,
+.search-detail-itinerary,
+.search-detail-actions {
+  border: 1px solid #d8e1eb;
+  border-radius: 1.2rem;
+  background: linear-gradient(180deg, #fcfdff 0%, #eef3f8 100%);
+  box-shadow: 0 12px 24px rgba(19, 32, 53, 0.06);
+  padding: 1.2rem;
+  display: grid;
+  gap: 1.4rem;
+}
+
+.search-detail-route-block {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.search-detail-route-block__times,
+.search-detail-route-block__airports {
+  display: grid;
+  grid-template-columns: minmax(88px, auto) minmax(0, 1fr) minmax(88px, auto);
+  align-items: center;
+  gap: 1rem;
+}
+
+.search-detail-route-block__meta {
+  display: grid;
+  justify-items: center;
+  gap: 0.15rem;
+  padding-top: 0.1rem;
+}
+
+.search-detail-time {
+  font-size: 1rem;
+  font-weight: 500;
+  color: var(--muted);
+}
+
+.search-detail-time--arrival {
+  text-align: right;
+}
+
+.search-detail-airport {
+  font-family: "Sora", "Outfit", sans-serif;
+  font-size: clamp(2rem, 8vw, 2.75rem);
+  line-height: 0.98;
+  color: var(--text);
+}
+
+.search-detail-airport--arrival {
+  text-align: right;
+}
+
+.search-detail-route-duration,
+.search-detail-route-stop,
+.search-detail-flight-number {
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: var(--muted);
+  text-align: center;
+}
+
+.search-detail-flight-number {
+  font-size: 0.78rem;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.search-detail-route-arrow {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.search-detail-route-arrow-line {
+  flex: 1;
+  height: 1.5px;
+  background: var(--panel-line);
+  border-radius: 999px;
+}
+
+.search-detail-route-arrow-head {
+  font-size: 1.15rem;
+  font-weight: 700;
+  line-height: 1;
+  color: #32455f;
+}
+
+.search-detail-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  justify-content: center;
+}
+
+.search-detail-section-heading {
+  display: grid;
+  gap: 0.35rem;
+  text-align: center;
+}
+
+.search-detail-section-heading__title {
+  margin: 0;
+  font-family: "Sora", "Outfit", sans-serif;
+  font-size: clamp(1.8rem, 5vw, 2.2rem);
+}
+
+.search-detail-section-heading__copy {
+  margin: 0;
+  color: var(--muted);
+}
+
+.search-detail-segments {
+  display: grid;
+  gap: 1rem;
+}
+
+.search-detail-segment {
+  border: 1px solid #d8e1eb;
+  border-radius: 1rem;
+  background: rgba(255, 255, 255, 0.8);
+  padding: 1rem;
+  display: grid;
+  gap: 1rem;
+}
+
+.search-detail-segment__badge {
+  width: fit-content;
+  padding: 0.35rem 0.65rem;
+  border-radius: 999px;
+  border: 1px solid #d3dfeb;
+  background: #f4f8fb;
+  color: #334155;
+  font-size: 0.76rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.search-detail-layover {
+  margin: 0.75rem 0 0;
+  padding: 0.8rem 1rem;
+  border: 1px dashed #c4d0dc;
+  border-radius: 0.9rem;
+  background: #eef4fa;
+  text-align: center;
+  color: #334155;
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.search-detail-actions__summary {
+  display: grid;
+  gap: 0.3rem;
+  justify-items: center;
+}
+
+.search-detail-actions__label {
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.search-detail-total {
+  margin: 0;
+  font-family: "Sora", "Outfit", sans-serif;
+  font-size: clamp(1.35rem, 4vw, 1.75rem);
+  color: var(--text);
+}
+
+.search-detail-actions__row {
+  display: grid;
+  grid-template-columns: minmax(110px, 0.65fr) minmax(0, 1.8fr);
+  gap: 0.9rem;
+}
+
+.search-detail-bookmark-button,
+.search-detail-book-button {
+  min-height: 3.4rem;
+  border: 1px solid transparent;
+  border-radius: 0.95rem;
+  font: inherit;
+  cursor: pointer;
+  transition:
+    background-color 150ms ease,
+    border-color 150ms ease,
+    transform 150ms ease,
+    box-shadow 150ms ease;
+}
+
+.search-detail-bookmark-button {
+  background: #eef3f8;
+  border-color: #d3dfeb;
+  color: #334155;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.search-detail-book-button {
+  background: linear-gradient(135deg, #d8e7f6 0%, #bfd6eb 100%);
+  border-color: #a4c1dd;
+  color: #163b5a;
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.search-detail-bookmark-button:hover,
+.search-detail-book-button:hover {
+  transform: translateY(-1px);
+}
+
+.search-detail-bookmark-button:hover {
+  background: #f4f8fb;
+}
+
+.search-detail-book-button:hover {
+  background: linear-gradient(135deg, #deebf7 0%, #c6dcee 100%);
+}
+
 .placeholder-grid {
   display: grid;
   gap: 0.7rem;
@@ -780,6 +1292,57 @@ body {
   display: grid;
   gap: 1rem;
   margin-top: 1.25rem;
+}
+
+.settings-screen,
+.bookmarks-screen {
+  display: grid;
+  gap: 1.5rem;
+}
+
+.settings-header,
+.bookmarks-header,
+.login-header {
+  text-align: center;
+  display: grid;
+  gap: 0.45rem;
+}
+
+.settings-header__eyebrow,
+.bookmarks-header__eyebrow,
+.login-header__eyebrow {
+  margin: 0;
+  font-size: 0.82rem;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: #556175;
+}
+
+.settings-header__title,
+.bookmarks-header__title,
+.login-header__title {
+  margin: 0;
+  font-family: "Sora", "Outfit", sans-serif;
+  font-size: clamp(2.2rem, 8vw, 3.4rem);
+  line-height: 1.02;
+}
+
+.login-header__title {
+  max-width: 9ch;
+  margin: 0 auto;
+  font-size: clamp(1.9rem, 6vw, 2.8rem);
+  line-height: 1.08;
+  text-wrap: balance;
+}
+
+.settings-header__copy,
+.bookmarks-header__copy,
+.login-header__copy {
+  width: min(100%, 560px);
+  margin: 0 auto;
+  font-size: 0.98rem;
+  line-height: 1.6;
+  color: var(--muted);
 }
 
 .settings-card {
@@ -948,6 +1511,7 @@ body {
   display: flex;
   flex-direction: column;
   gap: 16px;
+  align-items: center;
 }
 
 @media (min-width: 720px) {
@@ -968,6 +1532,17 @@ body {
     border-radius: 1.2rem;
   }
 
+  .search-results-panel {
+    padding: 1rem;
+    border-radius: 1.2rem;
+  }
+
+  .search-detail-panel {
+    padding: 1rem;
+    border-radius: 1.2rem;
+    gap: 1.5rem;
+  }
+
   .intro-actions {
     width: 100%;
   }
@@ -979,6 +1554,17 @@ body {
   .intro-form__grid,
   .intro-advanced__grid,
   .intro-form__actions {
+    grid-template-columns: 1fr;
+  }
+
+  .search-results-form__grid,
+  .search-results-filters {
+    grid-template-columns: 1fr;
+  }
+
+  .search-detail-route-block__times,
+  .search-detail-route-block__airports,
+  .search-detail-actions__row {
     grid-template-columns: 1fr;
   }
 
@@ -1013,6 +1599,32 @@ body {
   .history-card__miles {
     width: 100%;
     text-align: center;
+  }
+
+  .panel-utility-row,
+  .panel-utility-row--split,
+  .search-detail-topbar {
+    flex-wrap: wrap;
+  }
+
+  .search-results-option-list {
+    flex-direction: column;
+  }
+
+  .search-results-option {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .search-detail-time,
+  .search-detail-time--arrival,
+  .search-detail-airport,
+  .search-detail-airport--arrival {
+    text-align: center;
+  }
+
+  .search-detail-meta {
+    justify-content: flex-start;
   }
 }
 
@@ -1059,6 +1671,14 @@ body {
   .history-panel {
     padding: 1.6rem 1.8rem 1.8rem;
   }
+
+  .search-results-panel {
+    padding: 1.6rem 1.8rem 1.8rem;
+  }
+
+  .search-detail-panel {
+    padding: 1.6rem 1.8rem 1.8rem;
+  }
 }
 
 .login-screen{
@@ -1069,9 +1689,20 @@ body {
 
 .login-panel{
 
-    width:min(100%, 400px);
+    width:min(100%, 460px);
+    border: 1px solid #d7dee8;
+    border-radius: 1.5rem;
+    background: linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.98) 0%,
+      rgba(245, 248, 252, 0.98) 100%
+    );
+    box-shadow:
+      0 18px 50px rgba(19, 32, 53, 0.08),
+      inset 0 1px 0 rgba(255, 255, 255, 0.85);
+    padding: 1.35rem;
     display: grid;
-    gap: 1.1rem;
+    gap: 1.25rem;
 }
 
 .login-buttons{
@@ -1086,7 +1717,7 @@ body {
     width: 100%;
     min-height: 3.4rem;
     border-radius: 0.95rem;
-    bored: 1px solid transparent;
+    border: 1px solid transparent;
     font: inherit;
     font-size: 1rem;
     cursor: pointer;
@@ -1110,7 +1741,7 @@ body {
     gap: 0.45rem;
 }
 
-details span{
+.details span{
 
     font-size: 0.95rem;
     font-weight: 600;
