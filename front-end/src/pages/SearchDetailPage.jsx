@@ -78,10 +78,50 @@ function RouteBlock({
   );
 }
 
-function SearchDetailPage({ activeScreen, flight, onGoBack, onNavigateScreen }) {
+function SearchDetailPage({
+  activeScreen,
+  flight,
+  onGoBack,
+  onNavigateScreen,
+}) {
   function handleBackClick() {
     if (onGoBack) {
       onGoBack("search-results");
+    }
+  }
+
+  async function handleBookmark() {
+    const snapshot = {
+      id: flight.id,
+      airline: flight.airline,
+      flightNo: flight.flightNo,
+      depAirport: flight.depAirport,
+      arrAirport: flight.arrAirport,
+      dep: flight.dep,
+      arr: flight.arr,
+      durationMin: flight.durationMin,
+      stops: flight.stops,
+      miles: flight.miles,
+      logoUrl: flight.logoUrl,
+      class: flight.class,
+      itinerary: flight.itinerary,
+    };
+
+    try {
+      const response = await fetch("api/bookmarks", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          // TODO: Include user's auth token in headers so bookmark is associated correctly
+        },
+        body: JSON.stringify(snapshot),
+      });
+
+      if (!response.ok) {
+        throw new Error("Could not save bookmark.");
+      }
+    } catch (error) {
+      alert("Unable to save bookmark. Please try again.");
     }
   }
 
@@ -169,7 +209,9 @@ function SearchDetailPage({ activeScreen, flight, onGoBack, onNavigateScreen }) 
                 </article>
 
                 {segment.layover ? (
-                  <p className="search-detail-layover">Layover: {segment.layover}</p>
+                  <p className="search-detail-layover">
+                    Layover: {segment.layover}
+                  </p>
                 ) : null}
               </div>
             ))}
@@ -178,15 +220,21 @@ function SearchDetailPage({ activeScreen, flight, onGoBack, onNavigateScreen }) 
 
         <section className="search-detail-actions">
           <div className="search-detail-actions__summary">
-            <span className="search-detail-actions__label">Total Award Cost</span>
+            <span className="search-detail-actions__label">
+              Total Award Cost
+            </span>
             <p className="search-detail-total">
               {flight.miles.toLocaleString()} Miles
             </p>
           </div>
 
           <div className="search-detail-actions__row">
-            <button type="button" className="search-detail-bookmark-button">
-              Save
+            <button
+              type="button"
+              className="search-detail-bookmark-button"
+              onClick={handleBookmark}
+            >
+              Save to Bookmarks
             </button>
             <button
               type="button"

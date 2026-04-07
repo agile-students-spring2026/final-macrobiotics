@@ -20,7 +20,9 @@ function SearchResultsPage({
   const [sortBy, setSortBy] = useState("miles");
 
   const toggleFilter = (arr, setArr, val) =>
-    setArr(arr.includes(val) ? arr.filter((item) => item !== val) : [...arr, val]);
+    setArr(
+      arr.includes(val) ? arr.filter((item) => item !== val) : [...arr, val],
+    );
 
   useEffect(() => {
     let isMounted = true;
@@ -64,13 +66,17 @@ function SearchResultsPage({
 
   const filtered = useMemo(() => {
     let f = flights;
-    if (airFilter.length) f = f.filter((flight) => airFilter.includes(flight.airline));
-    if (stopsFilter.includes("Nonstop")) f = f.filter((flight) => flight.stops === 0);
-    if (stopsFilter.includes("1 Stop")) f = f.filter((flight) => flight.stops === 1);
-    if (stopsFilter.includes("2+ Stops")) f = f.filter((flight) => flight.stops >= 2);
+    if (airFilter.length)
+      f = f.filter((flight) => airFilter.includes(flight.airline));
+    if (stopsFilter.includes("Nonstop"))
+      f = f.filter((flight) => flight.stops === 0);
+    if (stopsFilter.includes("1 Stop"))
+      f = f.filter((flight) => flight.stops === 1);
+    if (stopsFilter.includes("2+ Stops"))
+      f = f.filter((flight) => flight.stops >= 2);
 
     return [...f].sort((a, b) =>
-      sortBy === "miles" ? a.miles - b.miles : a.durationMin - b.durationMin
+      sortBy === "miles" ? a.miles - b.miles : a.durationMin - b.durationMin,
     );
   }, [airFilter, flights, sortBy, stopsFilter]);
 
@@ -93,10 +99,13 @@ function SearchResultsPage({
         </div>
 
         <header className="search-results-heading">
-          <p className="search-results-heading__eyebrow">Award travel options</p>
+          <p className="search-results-heading__eyebrow">
+            Award travel options
+          </p>
           <h2 className="search-results-heading__title">Search Results</h2>
           <p className="search-results-heading__copy">
-            Refine by route, airline, and stop count to compare available mileage options.
+            Refine by route, airline, and stop count to compare available
+            mileage options.
           </p>
         </header>
 
@@ -154,7 +163,9 @@ function SearchResultsPage({
                 className="intro-advanced__toggle"
                 aria-expanded={isAdvancedOpen}
                 aria-controls="search-results-filters-panel"
-                onClick={() => setIsAdvancedOpen((currentValue) => !currentValue)}
+                onClick={() =>
+                  setIsAdvancedOpen((currentValue) => !currentValue)
+                }
               >
                 <span>Filters and Sort</span>
                 <svg
@@ -177,14 +188,18 @@ function SearchResultsPage({
                 className="search-results-filters"
               >
                 <section className="search-results-filter-card">
-                  <h3 className="search-results-filter-card__title">Airlines</h3>
+                  <h3 className="search-results-filter-card__title">
+                    Airlines
+                  </h3>
                   <div className="search-results-option-list">
                     {airlineOptions.map((airline) => (
                       <label key={airline} className="search-results-option">
                         <input
                           type="checkbox"
                           checked={airFilter.includes(airline)}
-                          onChange={() => toggleFilter(airFilter, setAirFilter, airline)}
+                          onChange={() =>
+                            toggleFilter(airFilter, setAirFilter, airline)
+                          }
                         />
                         <span>{airline}</span>
                       </label>
@@ -196,12 +211,19 @@ function SearchResultsPage({
                   <h3 className="search-results-filter-card__title">Stops</h3>
                   <div className="search-results-option-list">
                     {["Nonstop", "1 Stop", "2+ Stops"].map((stopsOption) => (
-                      <label key={stopsOption} className="search-results-option">
+                      <label
+                        key={stopsOption}
+                        className="search-results-option"
+                      >
                         <input
                           type="checkbox"
                           checked={stopsFilter.includes(stopsOption)}
                           onChange={() =>
-                            toggleFilter(stopsFilter, setStopsFilter, stopsOption)
+                            toggleFilter(
+                              stopsFilter,
+                              setStopsFilter,
+                              stopsOption,
+                            )
                           }
                         />
                         <span>{stopsOption}</span>
