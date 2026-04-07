@@ -1,3 +1,5 @@
+import { apiClient } from "../api/apiClient";
+
 function formatDuration(durationValue) {
   if (!durationValue) {
     return "";
@@ -91,30 +93,10 @@ function SearchDetailPage({
   }
 
   async function handleBookmark() {
-    const snapshot = {
-      id: flight.id,
-      airline: flight.airline,
-      flightNo: flight.flightNo,
-      depAirport: flight.depAirport,
-      arrAirport: flight.arrAirport,
-      dep: flight.dep,
-      arr: flight.arr,
-      durationMin: flight.durationMin,
-      stops: flight.stops,
-      miles: flight.miles,
-      logoUrl: flight.logoUrl,
-      class: flight.class,
-      itinerary: flight.itinerary,
-    };
-
     try {
-      const response = await fetch("api/bookmarks", {
+      const response = await apiClient("/api/bookmarks", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          // TODO: Include user's auth token in headers so bookmark is associated correctly
-        },
-        body: JSON.stringify(snapshot),
+        body: JSON.stringify(flight),
       });
 
       if (!response.ok) {
