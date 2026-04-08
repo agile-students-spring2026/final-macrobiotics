@@ -101,6 +101,9 @@ function SearchDetailPage({
 
       if (!response.ok) {
         throw new Error("Could not save bookmark.");
+      } else {
+        //TODO: Change to toast notif?
+        alert("Bookmark saved!");
       }
     } catch (error) {
       alert("Unable to save bookmark. Please try again.");

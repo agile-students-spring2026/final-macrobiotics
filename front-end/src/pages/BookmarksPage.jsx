@@ -13,6 +13,26 @@ const BookmarksPage = ({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  const handleDeleteBookmark = async (flight) => {
+    try {
+      setError(null);
+
+      const response = await apiClient(`/api/bookmarks/${flight.id}`, {
+        method: "DELETE",
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to delete bookmark.");
+      }
+      setFlights((prevFlights) =>
+        prevFlights.filter((f) => f.id !== flight.id),
+      );
+    } catch (err) {
+      setError(err.message);
+      console.error("Failed to delete bookmark:", err);
+    }
+  };
+
   useEffect(() => {
     const fetchFlights = async () => {
       try {
@@ -85,7 +105,7 @@ const BookmarksPage = ({
               aria-label="Delete flight"
               onClick={(e) => {
                 e.stopPropagation();
-                console.log("Delete flight clicked for ID:", flight.id);
+                handleDeleteBookmark(flight);
               }}
             >
               <svg
