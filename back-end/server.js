@@ -21,6 +21,7 @@ app.get("/api/bookmarks", (req, res) => {
     .json({ message: "Bookmarks retrieved successfully", data: bookmarks });
 });
 
+//TODO: Deduplicate entries when integrating with db
 app.post("/api/bookmarks", (req, res) => {
   console.log("Bookmark request received:\n", {
     flightNo: req.body.flightNo,
