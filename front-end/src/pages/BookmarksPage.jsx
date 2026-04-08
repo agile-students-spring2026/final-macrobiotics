@@ -1,55 +1,50 @@
 import React, { useState, useEffect } from "react";
 import FlightEntry from "../components/FlightEntry";
 import ScreenQuickActions from "../components/ScreenQuickActions";
+import { apiClient } from "../api/apiClient";
 
-const BookmarksPage = ({ activeScreen, onGoBack, onNavigateScreen }) => {
-  // const mockApiData = [
-  //   {
-  //     id: "1",
-  //     departureTime: "06:30",
-  //     departureAirport: "SFO",
-  //     arrivalTime: "13:30",
-  //     arrivalAirport: "JFK",
-  //     duration: "12h30min",
-  //     flightNumber: "DL1131",
-  //     miles: "35000",
-  //   },
-  //   {
-  //     id: "2",
-  //     departureTime: "08:15",
-  //     departureAirport: "LAX",
-  //     arrivalTime: "16:45",
-  //     arrivalAirport: "EWR",
-  //     duration: "5h30min",
-  //     flightNumber: "UA402",
-  //     miles: "42000",
-  //   },
-  // ];
-
+const BookmarksPage = ({
+  activeScreen,
+  onGoBack,
+  onNavigateScreen,
+  onSelectFlight,
+}) => {
   const [flights, setFlights] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+
+  const handleDeleteBookmark = async (flight) => {
+    try {
+      const response = await apiClient(`/api/bookmarks/${flight.id}`, {
+        method: "DELETE",
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Unknown error occurred.");
+      }
+      setFlights((prevFlights) =>
+        prevFlights.filter((f) => f.id !== flight.id),
+      );
+    } catch (error) {
+      console.error("Failed to delete bookmark. Reason:", error);
+    }
+  };
 
   useEffect(() => {
     const fetchFlights = async () => {
       try {
-        setError(null);
         setLoading(true);
-        const apiUrl = import.meta.env.VITE_API_URL;
-        const response = await fetch(apiUrl, {
+
+        const response = await apiClient("/api/bookmarks", {
           method: "GET",
-          headers: {
-            "X-API-Key": import.meta.env.VITE_API_KEY,
-          },
         });
         if (!response.ok) {
           throw new Error(`API request failed with status ${response.status}`);
         }
-        const data = await response.json();
-        setFlights(data);
-      } catch (err) {
-        console.error("Failed to fetch flights:", err);
-        setError(err.message);
+        const responseJson = await response.json();
+        setFlights(responseJson.data);
+      } catch (error) {
+        alert(`Failed to fetch flights: ${error.message}`);
       } finally {
         setLoading(false);
       }
@@ -85,10 +80,42 @@ const BookmarksPage = ({ activeScreen, onGoBack, onNavigateScreen }) => {
 
       <div className="bookmarks-results-container">
         {flights?.map((flight) => (
-          <FlightEntry key={flight.id} {...flight} />
+          <div
+            key={flight.id}
+            className="search-results-list__item flight-entry-container"
+            onClick={() => onSelectFlight(flight)}
+          >
+            <FlightEntry
+              departureTime={flight.dep}
+              departureAirport={flight.depAirport}
+              arrivalTime={flight.arr}
+              arrivalAirport={flight.arrAirport}
+              duration={`${Math.floor(flight.durationMin / 60)}h ${flight.durationMin % 60}m`}
+              flightNumber={flight.flightNo}
+              miles={flight.miles.toLocaleString()}
+              logoUrl={flight.logoUrl || ""}
+            />
+            <button
+              className="delete-button"
+              aria-label="Delete flight"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleDeleteBookmark(flight);
+              }}
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                className="trash-icon"
+              >
+                <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z" />
+              </svg>
+            </button>
+          </div>
         ))}
 
-        {flights?.length === 0 && <p>Loading flights...</p>}
+        {flights.length === 0 && !loading && <p>No bookmarks found.</p>}
+        {loading && <p>Loading flights...</p>}
       </div>
     </section>
   );

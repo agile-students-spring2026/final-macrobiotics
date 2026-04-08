@@ -1,3 +1,6 @@
+import React, { useState } from "react";
+import { apiClient } from "../api/apiClient";
+
 function formatDuration(durationValue) {
   if (!durationValue) {
     return "";
@@ -78,10 +81,34 @@ function RouteBlock({
   );
 }
 
-function SearchDetailPage({ activeScreen, flight, onGoBack, onNavigateScreen }) {
+function SearchDetailPage({
+  activeScreen,
+  flight,
+  onGoBack,
+  onNavigateScreen,
+}) {
   function handleBackClick() {
     if (onGoBack) {
       onGoBack("search-results");
+    }
+  }
+
+  async function handleBookmark() {
+    try {
+      const response = await apiClient("/api/bookmarks", {
+        method: "POST",
+        body: JSON.stringify(flight),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Unknown error occurred.");
+      } else {
+        //TODO: Change to toast notification?
+        alert("Bookmark saved!");
+      }
+    } catch (error) {
+      alert("Unable to save bookmark. Reason: " + error.message);
     }
   }
 
@@ -169,7 +196,9 @@ function SearchDetailPage({ activeScreen, flight, onGoBack, onNavigateScreen }) 
                 </article>
 
                 {segment.layover ? (
-                  <p className="search-detail-layover">Layover: {segment.layover}</p>
+                  <p className="search-detail-layover">
+                    Layover: {segment.layover}
+                  </p>
                 ) : null}
               </div>
             ))}
@@ -178,15 +207,21 @@ function SearchDetailPage({ activeScreen, flight, onGoBack, onNavigateScreen }) 
 
         <section className="search-detail-actions">
           <div className="search-detail-actions__summary">
-            <span className="search-detail-actions__label">Total Award Cost</span>
+            <span className="search-detail-actions__label">
+              Total Award Cost
+            </span>
             <p className="search-detail-total">
               {flight.miles.toLocaleString()} Miles
             </p>
           </div>
 
           <div className="search-detail-actions__row">
-            <button type="button" className="search-detail-bookmark-button">
-              Save
+            <button
+              type="button"
+              className="search-detail-bookmark-button"
+              onClick={handleBookmark}
+            >
+              Save to Bookmarks
             </button>
             <button
               type="button"
