@@ -11,32 +11,28 @@ const BookmarksPage = ({
 }) => {
   const [flights, setFlights] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
 
   const handleDeleteBookmark = async (flight) => {
     try {
-      setError(null);
-
       const response = await apiClient(`/api/bookmarks/${flight.id}`, {
         method: "DELETE",
       });
 
       if (!response.ok) {
-        throw new Error("Failed to delete bookmark.");
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Unknown error occurred.");
       }
       setFlights((prevFlights) =>
         prevFlights.filter((f) => f.id !== flight.id),
       );
-    } catch (err) {
-      setError(err.message);
-      console.error("Failed to delete bookmark:", err);
+    } catch (error) {
+      console.error("Failed to delete bookmark. Reason:", error);
     }
   };
 
   useEffect(() => {
     const fetchFlights = async () => {
       try {
-        setError(null);
         setLoading(true);
 
         const response = await apiClient("/api/bookmarks", {
@@ -47,9 +43,8 @@ const BookmarksPage = ({
         }
         const responseJson = await response.json();
         setFlights(responseJson.data);
-      } catch (err) {
-        console.error("Failed to fetch flights:", err);
-        setError(err.message);
+      } catch (error) {
+        alert(`Failed to fetch flights: ${error.message}`);
       } finally {
         setLoading(false);
       }

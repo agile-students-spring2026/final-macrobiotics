@@ -1,3 +1,4 @@
+import React, { useState } from "react";
 import { apiClient } from "../api/apiClient";
 
 function formatDuration(durationValue) {
@@ -100,13 +101,14 @@ function SearchDetailPage({
       });
 
       if (!response.ok) {
-        throw new Error("Could not save bookmark.");
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Unknown error occurred.");
       } else {
-        //TODO: Change to toast notif?
+        //TODO: Change to toast notification?
         alert("Bookmark saved!");
       }
     } catch (error) {
-      alert("Unable to save bookmark. Please try again.");
+      alert("Unable to save bookmark. Reason: " + error.message);
     }
   }
 
