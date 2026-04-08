@@ -1,0 +1,56 @@
+[
+  {
+    "id": 1,
+    "airline": "Delta",
+    "flightNo": "DL1131",
+    "depAirport": "SFO",
+    "arrAirport": "JFK",
+    "dep": "06:30",
+    "arr": "15:00",
+    "durationMin": 330,
+    "stops": 0,
+    "miles": 36000,
+    "logoUrl": "",
+    "class": "Business",
+    "itinerary": [
+      {
+        "depA": "SFO",
+        "dep": "06:30",
+        "arrA": "JFK",
+        "arr": "15:00",
+        "dur": "5h 30m"
+      }
+    ]
+  },
+  {
+    "id": 2,
+    "airline": "United",
+    "flightNo": "UA823",
+    "depAirport": "SFO",
+    "arrAirport": "JFK",
+    "dep": "08:00",
+    "arr": "16:45",
+    "durationMin": 525,
+    "stops": 1,
+    "miles": 28000,
+    "logoUrl": "",
+    "class": "Economy",
+    "itinerary": [
+      {
+        "depA": "SFO",
+        "dep": "08:00",
+        "arrA": "ORD",
+        "arr": "14:10",
+        "dur": "4h 10m",
+        "layover": "1h 05m in Chicago"
+      },
+      {
+        "depA": "ORD",
+        "dep": "15:15",
+        "arrA": "JFK",
+        "arr": "16:45",
+        "dur": "2h 30m"
+      }
+    ]
+  }
+]
