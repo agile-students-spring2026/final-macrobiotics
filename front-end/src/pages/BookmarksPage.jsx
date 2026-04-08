@@ -83,7 +83,8 @@ const BookmarksPage = ({
           </div>
         ))}
 
-        {flights?.length === 0 && <p>Loading flights...</p>}
+        {flights.length === 0 && !loading && <p>No bookmarks found.</p>}
+        {loading && <p>Loading flights...</p>}
       </div>
     </section>
   );
