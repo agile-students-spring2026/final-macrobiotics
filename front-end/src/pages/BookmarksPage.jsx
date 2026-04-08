@@ -3,7 +3,12 @@ import FlightEntry from "../components/FlightEntry";
 import ScreenQuickActions from "../components/ScreenQuickActions";
 import { apiClient } from "../api/apiClient";
 
-const BookmarksPage = ({ activeScreen, onGoBack, onNavigateScreen }) => {
+const BookmarksPage = ({
+  activeScreen,
+  onGoBack,
+  onNavigateScreen,
+  onSelectFlight,
+}) => {
   const [flights, setFlights] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -60,16 +65,22 @@ const BookmarksPage = ({ activeScreen, onGoBack, onNavigateScreen }) => {
 
       <div className="bookmarks-results-container">
         {flights?.map((flight) => (
-          <FlightEntry
-            departureTime={flight.dep}
-            departureAirport={flight.depAirport}
-            arrivalTime={flight.arr}
-            arrivalAirport={flight.arrAirport}
-            duration={`${Math.floor(flight.durationMin / 60)}h ${flight.durationMin % 60}m`}
-            flightNumber={flight.flightNo}
-            miles={flight.miles.toLocaleString()}
-            logoUrl={flight.logoUrl || ""}
-          />
+          <div
+            key={flight.id}
+            className="search-results-list__item"
+            onClick={() => onSelectFlight(flight)}
+          >
+            <FlightEntry
+              departureTime={flight.dep}
+              departureAirport={flight.depAirport}
+              arrivalTime={flight.arr}
+              arrivalAirport={flight.arrAirport}
+              duration={`${Math.floor(flight.durationMin / 60)}h ${flight.durationMin % 60}m`}
+              flightNumber={flight.flightNo}
+              miles={flight.miles.toLocaleString()}
+              logoUrl={flight.logoUrl || ""}
+            />
+          </div>
         ))}
 
         {flights?.length === 0 && <p>Loading flights...</p>}
