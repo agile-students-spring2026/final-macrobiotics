@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { apiClient } from "../api/apiClient";
 import ScreenQuickActions from "../components/ScreenQuickActions";
 
@@ -16,6 +17,10 @@ function formatDurationFromMinutes(minutes) {
 
   const hours = Math.floor(minutes / 60);
   const remainder = minutes % 60;
+
+  if (hours === 0) {
+    return `${remainder}m`;
+  }
 
   if (remainder === 0) {
     return `${hours}h`;
@@ -105,17 +110,76 @@ function SearchDetailPage({
   onGoBack,
   onNavigateScreen,
 }) {
+  const [detailedFlight, setDetailedFlight] = useState(flight);
+  const [isLoadingDetails, setIsLoadingDetails] = useState(false);
+  const [detailError, setDetailError] = useState("");
+
+  useEffect(() => {
+    setDetailedFlight(flight);
+    setDetailError("");
+  }, [flight]);
+
+  useEffect(() => {
+    if (!flight?.seatAeroAvailabilityId || !flight?.seatAeroTripId) {
+      return;
+    }
+
+    let isActive = true;
+
+    async function loadTripDetails() {
+      setIsLoadingDetails(true);
+      setDetailError("");
+
+      try {
+        const response = await apiClient(
+          `/api/search/flights/${flight.seatAeroAvailabilityId}/trips/${flight.seatAeroTripId}`,
+        );
+        const responseJson = await response.json();
+
+        if (!response.ok) {
+          throw new Error(
+            responseJson.message || "Unable to load detailed flight information.",
+          );
+        }
+
+        if (isActive) {
+          setDetailedFlight({
+            ...flight,
+            ...responseJson.data,
+          });
+        }
+      } catch (error) {
+        if (isActive) {
+          setDetailError(
+            error.message || "Unable to load detailed flight information.",
+          );
+        }
+      } finally {
+        if (isActive) {
+          setIsLoadingDetails(false);
+        }
+      }
+    }
+
+    loadTripDetails();
+
+    return () => {
+      isActive = false;
+    };
+  }, [flight]);
+
+  const activeFlight = detailedFlight ?? flight;
   const itinerary =
-    flight?.itinerary?.length > 0
-      ? flight.itinerary
-      : flight
+    activeFlight?.itinerary?.length > 0
+      ? activeFlight.itinerary
+      : activeFlight
         ? [
             {
-              depA: flight.depAirport,
-              dep: flight.dep,
-              arrA: flight.arrAirport,
-              arr: flight.arr,
-              dur: formatDurationFromMinutes(flight.durationMin),
+              depA: activeFlight.depAirport,
+              dep: activeFlight.dep,
+              arrA: activeFlight.arrAirport,
+              arr: activeFlight.arr,
+              dur: formatDurationFromMinutes(activeFlight.durationMin),
             },
           ]
         : [];
@@ -130,7 +194,7 @@ function SearchDetailPage({
     try {
       const response = await apiClient("/api/bookmarks", {
         method: "POST",
-        body: JSON.stringify(flight),
+        body: JSON.stringify(activeFlight),
       });
 
       if (!response.ok) {
@@ -145,7 +209,7 @@ function SearchDetailPage({
     }
   }
 
-  if (!flight) {
+  if (!activeFlight) {
     return (
       <section className="screen search-detail-screen">
         <div className="search-detail-panel">
@@ -176,39 +240,49 @@ function SearchDetailPage({
         <header className="search-detail-header">
           <p className="search-detail-header__eyebrow">Flight Details</p>
           <h2 className="search-detail-header__title">
-            {flight.depAirport} to {flight.arrAirport}
+            {activeFlight.depAirport} to {activeFlight.arrAirport}
           </h2>
           <p className="search-detail-header__copy">
             Review the itinerary, stop pattern, and mileage cost before booking.
           </p>
+          {isLoadingDetails ? (
+            <p className="search-detail-header__copy">
+              Loading detailed itinerary...
+            </p>
+          ) : null}
+          {!isLoadingDetails && detailError ? (
+            <p className="search-detail-header__copy">{detailError}</p>
+          ) : null}
         </header>
 
         <section className="search-detail-hero">
           <RouteBlock
-            departureTime={flight.dep}
-            departureAirport={flight.depAirport}
-            arrivalTime={flight.arr}
-            arrivalAirport={flight.arrAirport}
-            duration={formatDurationFromMinutes(flight.durationMin)}
-            metaLabel={getViaLabel(flight)}
+            departureTime={activeFlight.dep}
+            departureAirport={activeFlight.depAirport}
+            arrivalTime={activeFlight.arr}
+            arrivalAirport={activeFlight.arrAirport}
+            duration={formatDurationFromMinutes(activeFlight.durationMin)}
+            metaLabel={getViaLabel(activeFlight)}
           />
 
           <div className="search-detail-meta">
-            {flight.class ? (
-              <span className="history-card__chip">{flight.class}</span>
+            {activeFlight.class ? (
+              <span className="history-card__chip">{activeFlight.class}</span>
             ) : null}
-            {flight.airline ? (
-              <span className="history-card__chip">{flight.airline}</span>
+            {activeFlight.airline ? (
+              <span className="history-card__chip">{activeFlight.airline}</span>
             ) : null}
-            {flight.source || flight.seatAeroSource ? (
+            {activeFlight.source || activeFlight.seatAeroSource ? (
               <span className="history-card__chip">
-                {getBookingProgramLabel(flight)}
+                {getBookingProgramLabel(activeFlight)}
               </span>
             ) : null}
-            {flight.flightNo ? (
-              <span className="history-card__chip">{flight.flightNo}</span>
+            {activeFlight.flightNo ? (
+              <span className="history-card__chip">{activeFlight.flightNo}</span>
             ) : null}
-            <span className="history-card__chip">{getStopSummary(flight)}</span>
+            <span className="history-card__chip">
+              {getStopSummary(activeFlight)}
+            </span>
           </div>
         </section>
 
@@ -235,7 +309,7 @@ function SearchDetailPage({
                     arrivalAirport={segment.arrA}
                     duration={formatDuration(segment.dur)}
                     metaLabel={index === 0 ? "Operating segment" : "Connection"}
-                    footLabel={flight.flightNo}
+                    footLabel={segment.flightNo || activeFlight.flightNo}
                   />
                 </article>
 
@@ -255,7 +329,7 @@ function SearchDetailPage({
               Total Award Cost
             </span>
             <p className="search-detail-total">
-              {flight.miles.toLocaleString()} Miles
+              {activeFlight.miles.toLocaleString()} Miles
             </p>
           </div>
 
@@ -270,11 +344,20 @@ function SearchDetailPage({
             <button
               type="button"
               className="search-detail-book-button"
-              onClick={() =>
-                alert(`Booking via ${getBookingProgramLabel(flight)}`)
-              }
+              onClick={() => {
+                const primaryBookingLink = activeFlight.bookingLinks?.find(
+                  (bookingLink) => bookingLink.primary,
+                );
+
+                if (primaryBookingLink?.link) {
+                  window.open(primaryBookingLink.link, "_blank", "noopener,noreferrer");
+                  return;
+                }
+
+                alert(`Booking via ${getBookingProgramLabel(activeFlight)}`);
+              }}
             >
-              Book via {getBookingProgramLabel(flight)}
+              Book via {getBookingProgramLabel(activeFlight)}
             </button>
           </div>
         </section>

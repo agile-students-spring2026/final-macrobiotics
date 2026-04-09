@@ -247,4 +247,118 @@ describe("Search API", () => {
     expect(response.status).to.equal(502);
     expect(response.body.message).to.equal("upstream exploded");
   });
+
+  it("retrieves and normalizes detailed itinerary data for a selected trip", async () => {
+    process.env.SEATS_AERO_API = "test-key";
+    global.fetch = async () =>
+      createJsonResponse({
+        data: [
+          {
+            ID: "trip-1",
+            AvailabilityID: "avail-1",
+            MileageCost: 19000,
+            TotalDuration: 574,
+            Stops: 1,
+            Carriers: "AA, AS",
+            FlightNumbers: "AA1849, AS2907",
+            OriginAirport: "JFK",
+            DestinationAirport: "SFO",
+            Connections: ["DFW"],
+            DepartsAt: "2026-05-15T17:20:00Z",
+            ArrivesAt: "2026-05-15T23:54:00Z",
+            Cabin: "economy",
+            Source: "american",
+            AvailabilitySegments: [
+              {
+                FlightNumber: "AA1849",
+                OriginAirport: "JFK",
+                DestinationAirport: "DFW",
+                DepartsAt: "2026-05-15T17:20:00Z",
+                ArrivesAt: "2026-05-15T20:30:00Z",
+                Duration: 250,
+                Order: 0,
+                Cabin: "economy",
+              },
+              {
+                FlightNumber: "AS2907",
+                OriginAirport: "DFW",
+                DestinationAirport: "SFO",
+                DepartsAt: "2026-05-15T21:10:00Z",
+                ArrivesAt: "2026-05-15T23:54:00Z",
+                Duration: 224,
+                Order: 1,
+                Cabin: "economy",
+              },
+            ],
+          },
+          {
+            ID: "trip-2",
+            AvailabilityID: "avail-1",
+          },
+        ],
+        carriers: {
+          AA: "American Airlines",
+          AS: "Alaska Airlines",
+        },
+        booking_links: [
+          {
+            label: "Book via American",
+            link: "https://example.com/book",
+            primary: true,
+          },
+        ],
+      });
+
+    const response = await request(app).get(
+      "/api/search/flights/avail-1/trips/trip-1",
+    );
+
+    expect(response.status).to.equal(200);
+    expect(response.body.data).to.include({
+      id: "trip-1",
+      seatAeroAvailabilityId: "avail-1",
+      seatAeroTripId: "trip-1",
+      depAirport: "JFK",
+      arrAirport: "SFO",
+      dep: "17:20",
+      arr: "23:54",
+      durationMin: 574,
+      stops: 1,
+      miles: 19000,
+      class: "Economy",
+      flightNo: "AA1849, AS2907",
+      airline: "American Airlines, Alaska Airlines",
+    });
+    expect(response.body.data.itinerary).to.have.length(2);
+    expect(response.body.data.itinerary[0]).to.include({
+      depA: "JFK",
+      arrA: "DFW",
+      dep: "17:20",
+      arr: "20:30",
+      dur: "4h 10m",
+      flightNo: "AA1849",
+    });
+    expect(response.body.data.itinerary[0].layover).to.equal("40m in DFW");
+    expect(response.body.data.bookingLinks).to.deep.equal([
+      {
+        label: "Book via American",
+        link: "https://example.com/book",
+        primary: true,
+      },
+    ]);
+  });
+
+  it("returns 404 when the requested trip is not present in the detail response", async () => {
+    process.env.SEATS_AERO_API = "test-key";
+    global.fetch = async () => createJsonResponse({ data: [] });
+
+    const response = await request(app).get(
+      "/api/search/flights/avail-1/trips/missing-trip",
+    );
+
+    expect(response.status).to.equal(404);
+    expect(response.body.message).to.equal(
+      "Trip details were not found for the selected result.",
+    );
+  });
 });

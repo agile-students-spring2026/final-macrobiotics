@@ -3,7 +3,7 @@ import cors from "cors";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { v4 as uuidv4 } from "uuid";
-import { searchSeatsAeroFlights } from "./seatsAero.js";
+import { getSeatsAeroTripDetail, searchSeatsAeroFlights } from "./seatsAero.js";
 
 const app = express();
 const port = 3000;
@@ -35,6 +35,24 @@ app.get("/api/search/flights", async (req, res) => {
   } catch (error) {
     res.status(error.statusCode ?? 500).json({
       message: error.message ?? "Unable to retrieve flights.",
+    });
+  }
+});
+
+app.get("/api/search/flights/:availabilityId/trips/:tripId", async (req, res) => {
+  try {
+    const flight = await getSeatsAeroTripDetail({
+      availabilityId: req.params.availabilityId,
+      tripId: req.params.tripId,
+    });
+
+    res.status(200).json({
+      message: "Flight details retrieved successfully",
+      data: flight,
+    });
+  } catch (error) {
+    res.status(error.statusCode ?? 500).json({
+      message: error.message ?? "Unable to retrieve flight details.",
     });
   }
 });

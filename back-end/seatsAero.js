@@ -179,6 +179,10 @@ function formatDurationFromMinutes(minutes) {
   const hours = Math.floor(minutes / 60);
   const remainder = minutes % 60;
 
+  if (hours === 0) {
+    return `${remainder}m`;
+  }
+
   if (remainder === 0) {
     return `${hours}h`;
   }
@@ -348,6 +352,8 @@ function normalizeSegment(segment) {
 
   const marketingCarrier =
     getFirstValue(segment, [
+      "CarrierCode",
+      "carrierCode",
       "Carrier",
       "carrier",
       "MarketingCarrier",
@@ -367,6 +373,8 @@ function normalizeSegment(segment) {
   const durationMinutes =
     toNumber(
       getFirstValue(segment, [
+        "Duration",
+        "duration",
         "DurationMinutes",
         "durationMinutes",
         "DurationMin",
@@ -399,7 +407,15 @@ function normalizeSegment(segment) {
 
 function normalizeTrip(trip, fallbackValues = {}) {
   const rawSegments = asArray(
-    getFirstValue(trip, ["Flights", "flights", "Segments", "segments", "itinerary"]),
+    getFirstValue(trip, [
+      "AvailabilitySegments",
+      "availabilitySegments",
+      "Flights",
+      "flights",
+      "Segments",
+      "segments",
+      "itinerary",
+    ]),
   );
   const connections = normalizeDelimitedList(
     getFirstValue(trip, ["Connections", "connections"]),
@@ -815,4 +831,109 @@ export async function searchSeatsAeroFlights(
   }
 
   return normalizeSeatsAeroResults(responseBody);
+}
+
+export async function getSeatsAeroTripDetail(
+  { availabilityId, tripId },
+  fetchImplementation = fetch,
+) {
+  const apiKey = process.env.SEATS_AERO_API?.trim();
+
+  if (!apiKey) {
+    const configurationError = new Error(
+      "SEATS_AERO_API is not configured on the backend.",
+    );
+    configurationError.statusCode = 500;
+    throw configurationError;
+  }
+
+  if (!availabilityId || !tripId) {
+    const validationError = new Error(
+      "availabilityId and tripId are required route parameters.",
+    );
+    validationError.statusCode = 400;
+    throw validationError;
+  }
+
+  const response = await fetchImplementation(
+    `${SEATS_AERO_BASE_URL}/trips/${encodeURIComponent(availabilityId)}`,
+    {
+      method: "GET",
+      headers: {
+        Accept: "application/json",
+        "Partner-Authorization": apiKey,
+      },
+    },
+  );
+
+  let responseBody = null;
+
+  try {
+    responseBody = await response.json();
+  } catch {
+    responseBody = null;
+  }
+
+  if (!response.ok) {
+    const upstreamError = new Error(
+      responseBody?.message ?? "Seats.aero trip request failed.",
+    );
+    upstreamError.statusCode =
+      response.status >= 400 && response.status < 500 ? 400 : 502;
+    throw upstreamError;
+  }
+
+  const trip = asArray(getFirstValue(responseBody, ["data", "results", "items"])).find(
+    (candidateTrip) => String(getFirstValue(candidateTrip, ["ID", "id"])) === String(tripId),
+  );
+
+  if (!trip) {
+    const notFoundError = new Error("Trip details were not found for the selected result.");
+    notFoundError.statusCode = 404;
+    throw notFoundError;
+  }
+
+  const carriers = getFirstValue(responseBody, ["carriers"]) ?? {};
+  const bookingLinks = asArray(getFirstValue(responseBody, ["booking_links", "bookingLinks"]));
+
+  const normalizedTrip = normalizeTrip(trip, {
+    originAirport: getFirstValue(trip, ["OriginAirport", "originAirport"]),
+    destinationAirport: getFirstValue(trip, ["DestinationAirport", "destinationAirport"]),
+    travelDate: getFirstValue(trip, ["Date", "date", "DepartsAt", "departsAt"]),
+    source: getFirstValue(trip, ["Source", "source"]),
+    airline: getFirstValue(trip, ["Carriers", "carriers"]),
+    class: getFirstValue(trip, ["Cabin", "cabin"]),
+    miles: getFirstValue(trip, ["MileageCost", "mileageCost"]),
+  });
+
+  const resolvedAirlines = normalizeDelimitedList(normalizedTrip.airline).map(
+    (carrierCode) => carriers[carrierCode] ?? carrierCode,
+  );
+
+  return {
+    id: String(tripId),
+    seatAeroAvailabilityId: String(availabilityId),
+    seatAeroTripId: String(tripId),
+    seatAeroSource: normalizedTrip.source,
+    airline: resolvedAirlines.join(", ") || normalizedTrip.airline,
+    flightNo: normalizedTrip.flightNo,
+    depAirport: normalizedTrip.depAirport,
+    arrAirport: normalizedTrip.arrAirport,
+    dep: normalizedTrip.dep,
+    arr: normalizedTrip.arr,
+    durationMin: normalizedTrip.durationMin,
+    stops: normalizedTrip.stops,
+    miles: normalizedTrip.miles,
+    logoUrl: "",
+    class: normalizedTrip.class,
+    itinerary: normalizedTrip.itinerary,
+    travelDate: normalizedTrip.travelDate,
+    source: normalizedTrip.source,
+    connections: normalizedTrip.connections,
+    bookingLinks: bookingLinks.map((bookingLink) => ({
+      label: bookingLink.label,
+      link: bookingLink.link,
+      primary: Boolean(bookingLink.primary),
+    })),
+  };
 }
