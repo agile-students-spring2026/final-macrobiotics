@@ -2,9 +2,10 @@ function AppFrame({ screens, activeScreen, onChangeScreen, children }) {
   return (
     <div className="app-shell">
       <header className="app-header">
-        <h1 className="app-title">Milely Front-End Framework</h1>
+        <h1 className="app-title">Milely - Award Travel Made Simple</h1>
         <p className="app-subtitle">
-          Sprint 1 scaffold with seven React screens.
+          Award travel options across any airline and loyalty program, all in
+          one place.
         </p>
       </header>
 
