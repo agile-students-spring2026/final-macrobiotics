@@ -29,7 +29,7 @@ function SearchResultsPage({
 
     async function loadFlights() {
       try {
-        const response = await fetch("/mock/search-results.json");
+        const response = await fetch("http://localhost:3000/api/flights");
 
         if (!response.ok) {
           throw new Error("Unable to load search results.");
@@ -38,7 +38,7 @@ function SearchResultsPage({
         const searchResults = await response.json();
 
         if (isMounted) {
-          setFlights(searchResults);
+          setFlights(searchResults.data);
           setLoadError("");
         }
       } catch (error) {

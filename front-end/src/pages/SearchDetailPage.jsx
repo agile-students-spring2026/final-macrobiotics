@@ -1,5 +1,6 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { apiClient } from "../api/apiClient";
+import ScreenQuickActions from "../components/ScreenQuickActions";
 
 function formatDuration(durationValue) {
   if (!durationValue) {
@@ -93,6 +94,17 @@ function SearchDetailPage({
     }
   }
 
+  const [flightDetail, setFlightDetail] = useState(null);
+
+  useEffect(() => {
+    if (!flight?.id) return;
+    console.log("Fetching flight with id:", flight.id);
+    fetch(`http://localhost:3000/api/flights/${flight.id}`)
+      .then(res => res.json())
+      .then(data => setFlightDetail(data.data))
+      .catch(err => console.error("Failed to fetch flight detail:", err));
+  }, [flight?.id]);
+
   async function handleBookmark() {
     try {
       const response = await apiClient("/api/bookmarks", {
@@ -122,6 +134,16 @@ function SearchDetailPage({
     );
   }
 
+  if (!flightDetail) {
+    return (
+      <section className="screen search-detail-screen">
+        <div className="search-detail-panel">
+          <div className="history-empty-state">Loading flight details...</div>
+        </div>
+      </section>
+    );
+  }
+
   return (
     <section className="screen search-detail-screen">
       <div className="search-detail-panel">
@@ -143,7 +165,7 @@ function SearchDetailPage({
         <header className="search-detail-header">
           <p className="search-detail-header__eyebrow">Flight Details</p>
           <h2 className="search-detail-header__title">
-            {flight.depAirport} to {flight.arrAirport}
+            {flightDetail.depAirport} to {flightDetail.arrAirport}
           </h2>
           <p className="search-detail-header__copy">
             Review the itinerary, stop pattern, and mileage cost before booking.
@@ -152,19 +174,19 @@ function SearchDetailPage({
 
         <section className="search-detail-hero">
           <RouteBlock
-            departureTime={flight.dep}
-            departureAirport={flight.depAirport}
-            arrivalTime={flight.arr}
-            arrivalAirport={flight.arrAirport}
-            duration={formatDurationFromMinutes(flight.durationMin)}
-            metaLabel={getViaLabel(flight)}
+            departureTime={flightDetail.dep}
+            departureAirport={flightDetail.depAirport}
+            arrivalTime={flightDetail.arr}
+            arrivalAirport={flightDetail.arrAirport}
+            duration={formatDurationFromMinutes(flightDetail.durationMin)}
+            metaLabel={getViaLabel(flightDetail)}
           />
 
           <div className="search-detail-meta">
-            <span className="history-card__chip">{flight.class}</span>
-            <span className="history-card__chip">{flight.airline}</span>
-            <span className="history-card__chip">{flight.flightNo}</span>
-            <span className="history-card__chip">{getStopSummary(flight)}</span>
+            <span className="history-card__chip">{flightDetail.class}</span>
+            <span className="history-card__chip">{flightDetail.airline}</span>
+            <span className="history-card__chip">{flightDetail.flightNo}</span>
+            <span className="history-card__chip">{getStopSummary(flightDetail)}</span>
           </div>
         </section>
 
@@ -177,7 +199,7 @@ function SearchDetailPage({
           </div>
 
           <div className="search-detail-segments">
-            {flight.itinerary.map((segment, index) => (
+            {flightDetail.itinerary.map((segment, index) => (
               <div key={`${segment.depA}-${segment.arrA}-${index}`}>
                 <article className="search-detail-segment">
                   <div className="search-detail-segment__badge">
@@ -191,7 +213,7 @@ function SearchDetailPage({
                     arrivalAirport={segment.arrA}
                     duration={formatDuration(segment.dur)}
                     metaLabel={index === 0 ? "Operating segment" : "Connection"}
-                    footLabel={`${flight.airline} ${flight.flightNo}`}
+                    footLabel={`${flightDetail.airline} ${flightDetail.flightNo}`}
                   />
                 </article>
 
@@ -211,7 +233,7 @@ function SearchDetailPage({
               Total Award Cost
             </span>
             <p className="search-detail-total">
-              {flight.miles.toLocaleString()} Miles
+              {flightDetail.miles.toLocaleString()} Miles
             </p>
           </div>
 
@@ -226,9 +248,9 @@ function SearchDetailPage({
             <button
               type="button"
               className="search-detail-book-button"
-              onClick={() => alert(`Booking via ${flight.airline}`)}
+              onClick={() => alert(`Booking via ${flightDetail.airline}`)}
             >
-              Book via {flight.airline}
+              Book via {flightDetail.airline}
             </button>
           </div>
         </section>
@@ -238,4 +260,4 @@ function SearchDetailPage({
 }
 
 export default SearchDetailPage;
-import ScreenQuickActions from "../components/ScreenQuickActions";
+
