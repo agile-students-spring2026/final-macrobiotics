@@ -182,9 +182,9 @@ app.post("/api/login", (req, res) => {
     });
   }
 
-  res.status(201).json({
+  res.status(200).json({
 
-    message: "Account successfully created.",
+    message: "Login successful.",
     
     data: {
       email,
