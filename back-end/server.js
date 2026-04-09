@@ -13,6 +13,57 @@ app.get("/", (req, res) => {
   res.send("API route reached successfully");
 });
 
+// Mock user settings (Sprint 2: in-memory, no persistence required)
+const userSettings = {
+  email: "user@example.com",
+  preferences: [
+    { id: "airport", label: "Default Airport", value: "JFK" },
+    { id: "airline", label: "Default Airline", value: "Delta" },
+    { id: "card", label: "Default Credit Card", value: "Chase Sapphire Preferred" },
+  ],
+};
+
+app.get("/api/settings/preferences", (_req, res) => {
+  res.status(200).json({
+    message: "Preferences retrieved successfully",
+    data: userSettings.preferences,
+  });
+});
+
+app.put("/api/settings/email", (req, res) => {
+  const { previousEmail, newEmail } = req.body;
+  if (!previousEmail || !newEmail) {
+    return res
+      .status(400)
+      .json({ message: "previousEmail and newEmail are required." });
+  }
+  res.status(200).json({ message: "Email updated successfully." });
+});
+
+app.put("/api/settings/password", (req, res) => {
+  const { previousPassword, newPassword } = req.body;
+  if (!previousPassword || !newPassword) {
+    return res
+      .status(400)
+      .json({ message: "previousPassword and newPassword are required." });
+  }
+  res.status(200).json({ message: "Password updated successfully." });
+});
+
+app.put("/api/settings/preferences", (req, res) => {
+  const updates = req.body;
+  if (!Array.isArray(updates) || updates.length === 0) {
+    return res.status(400).json({
+      message: "Request body must be a non-empty array of preference updates.",
+    });
+  }
+  updates.forEach(({ id, value }) => {
+    const pref = userSettings.preferences.find((p) => p.id === id);
+    if (pref) pref.value = value;
+  });
+  res.status(200).json({ message: "Preferences updated successfully." });
+});
+
 //TODO: Will need to intercept the flight API to assign our own UUIDs to each flight
 
 let bookmarks = [];

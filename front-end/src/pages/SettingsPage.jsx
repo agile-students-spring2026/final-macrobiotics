@@ -1,23 +1,43 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import ScreenQuickActions from "../components/ScreenQuickActions";
-
-const DEFAULT_PREFERENCES = [
-  { id: "airport", label: "Default Airport", value: "JFK" },
-  { id: "airline", label: "Default Airline", value: "Delta" },
-  { id: "card", label: "Default Credit Card", value: "Chase Sapphire Preferred" }
-];
+import { apiClient } from "../api/apiClient";
 
 function SettingsPage({ activeScreen, onGoBack, onNavigateScreen }) {
   const [showDefaultPreferences, setShowDefaultPreferences] = useState(false);
   const [activePreference, setActivePreference] = useState(null);
   const [activeAccountAction, setActiveAccountAction] = useState(null);
+  const [preferences, setPreferences] = useState([]);
+  const [editValues, setEditValues] = useState({});
+  const [editAllMode, setEditAllMode] = useState(false);
+  const [emailForm, setEmailForm] = useState({ previousEmail: "", newEmail: "" });
+  const [passwordForm, setPasswordForm] = useState({ previousPassword: "", newPassword: "" });
+  const [statusMessage, setStatusMessage] = useState(null);
+
+  useEffect(() => {
+    const fetchPreferences = async () => {
+      try {
+        const response = await apiClient("/api/settings/preferences");
+        if (!response.ok) {
+          throw new Error(`Request failed with status ${response.status}`);
+        }
+        const json = await response.json();
+        setPreferences(json.data);
+        const initial = {};
+        json.data.forEach((p) => { initial[p.id] = p.value; });
+        setEditValues(initial);
+      } catch (error) {
+        console.error("Failed to fetch preferences:", error);
+      }
+    };
+    fetchPreferences();
+  }, []);
 
   const handleToggleDefaultPreferences = () => {
     setShowDefaultPreferences((current) => {
       if (current) {
         setActivePreference(null);
+        setEditAllMode(false);
       }
-
       return !current;
     });
   };
@@ -32,6 +52,78 @@ function SettingsPage({ activeScreen, onGoBack, onNavigateScreen }) {
     setActiveAccountAction((current) =>
       current === actionType ? null : actionType
     );
+    setStatusMessage(null);
+  };
+
+  const handleChangeEmail = async (e) => {
+    e.preventDefault();
+    try {
+      const response = await apiClient("/api/settings/email", {
+        method: "PUT",
+        body: JSON.stringify(emailForm),
+      });
+      const json = await response.json();
+      if (!response.ok) throw new Error(json.message);
+      setStatusMessage({ type: "success", text: json.message });
+      setEmailForm({ previousEmail: "", newEmail: "" });
+      setActiveAccountAction(null);
+    } catch (error) {
+      setStatusMessage({ type: "error", text: error.message });
+    }
+  };
+
+  const handleChangePassword = async (e) => {
+    e.preventDefault();
+    try {
+      const response = await apiClient("/api/settings/password", {
+        method: "PUT",
+        body: JSON.stringify(passwordForm),
+      });
+      const json = await response.json();
+      if (!response.ok) throw new Error(json.message);
+      setStatusMessage({ type: "success", text: json.message });
+      setPasswordForm({ previousPassword: "", newPassword: "" });
+      setActiveAccountAction(null);
+    } catch (error) {
+      setStatusMessage({ type: "error", text: error.message });
+    }
+  };
+
+  const handleSavePreference = async (preferenceId) => {
+    try {
+      const response = await apiClient("/api/settings/preferences", {
+        method: "PUT",
+        body: JSON.stringify([{ id: preferenceId, value: editValues[preferenceId] }]),
+      });
+      const json = await response.json();
+      if (!response.ok) throw new Error(json.message);
+      setPreferences((prev) =>
+        prev.map((p) =>
+          p.id === preferenceId ? { ...p, value: editValues[preferenceId] } : p
+        )
+      );
+      setActivePreference(null);
+    } catch (error) {
+      console.error("Failed to save preference:", error);
+    }
+  };
+
+  const handleSaveAllPreferences = async () => {
+    try {
+      const updates = preferences.map((p) => ({ id: p.id, value: editValues[p.id] }));
+      const response = await apiClient("/api/settings/preferences", {
+        method: "PUT",
+        body: JSON.stringify(updates),
+      });
+      const json = await response.json();
+      if (!response.ok) throw new Error(json.message);
+      setPreferences((prev) =>
+        prev.map((p) => ({ ...p, value: editValues[p.id] }))
+      );
+      setEditAllMode(false);
+    } catch (error) {
+      console.error("Failed to save preferences:", error);
+    }
   };
 
   return (
@@ -59,6 +151,12 @@ function SettingsPage({ activeScreen, onGoBack, onNavigateScreen }) {
         </p>
       </header>
 
+      {statusMessage ? (
+        <p className={`settings-status-message settings-status-message--${statusMessage.type}`}>
+          {statusMessage.text}
+        </p>
+      ) : null}
+
       <div className="settings-grid">
         <div className="settings-card">
           <h3>Account</h3>
@@ -74,14 +172,31 @@ function SettingsPage({ activeScreen, onGoBack, onNavigateScreen }) {
             </button>
 
             {activeAccountAction === "email" ? (
-              <div className="account-action-panel">
-                <button className="account-detail-button" type="button">
-                  Previous Email
+              <form className="account-action-panel" onSubmit={handleChangeEmail}>
+                <input
+                  className="account-detail-input"
+                  type="email"
+                  placeholder="Previous Email"
+                  value={emailForm.previousEmail}
+                  onChange={(e) =>
+                    setEmailForm((f) => ({ ...f, previousEmail: e.target.value }))
+                  }
+                  required
+                />
+                <input
+                  className="account-detail-input"
+                  type="email"
+                  placeholder="New Email"
+                  value={emailForm.newEmail}
+                  onChange={(e) =>
+                    setEmailForm((f) => ({ ...f, newEmail: e.target.value }))
+                  }
+                  required
+                />
+                <button className="account-submit-button" type="submit">
+                  Save
                 </button>
-                <button className="account-detail-button" type="button">
-                  New Email
-                </button>
-              </div>
+              </form>
             ) : null}
           </div>
 
@@ -97,14 +212,31 @@ function SettingsPage({ activeScreen, onGoBack, onNavigateScreen }) {
             </button>
 
             {activeAccountAction === "password" ? (
-              <div className="account-action-panel">
-                <button className="account-detail-button" type="button">
-                  Previous Password
+              <form className="account-action-panel" onSubmit={handleChangePassword}>
+                <input
+                  className="account-detail-input"
+                  type="password"
+                  placeholder="Previous Password"
+                  value={passwordForm.previousPassword}
+                  onChange={(e) =>
+                    setPasswordForm((f) => ({ ...f, previousPassword: e.target.value }))
+                  }
+                  required
+                />
+                <input
+                  className="account-detail-input"
+                  type="password"
+                  placeholder="New Password"
+                  value={passwordForm.newPassword}
+                  onChange={(e) =>
+                    setPasswordForm((f) => ({ ...f, newPassword: e.target.value }))
+                  }
+                  required
+                />
+                <button className="account-submit-button" type="submit">
+                  Save
                 </button>
-                <button className="account-detail-button" type="button">
-                  New Password
-                </button>
-              </div>
+              </form>
             ) : null}
           </div>
         </div>
@@ -122,7 +254,7 @@ function SettingsPage({ activeScreen, onGoBack, onNavigateScreen }) {
           {showDefaultPreferences ? (
             <div className="preferences-panel">
               <div className="preferences-list">
-                {DEFAULT_PREFERENCES.map((preference) => {
+                {preferences.map((preference) => {
                   const isActive = activePreference === preference.id;
 
                   return (
@@ -140,10 +272,25 @@ function SettingsPage({ activeScreen, onGoBack, onNavigateScreen }) {
                         </span>
                       </button>
 
-                      {isActive ? (
+                      {isActive && !editAllMode ? (
                         <div className="preference-item__actions">
-                          <button className="preference-edit-button" type="button">
-                            Edit
+                          <input
+                            className="preference-edit-input"
+                            type="text"
+                            value={editValues[preference.id] ?? preference.value}
+                            onChange={(e) =>
+                              setEditValues((v) => ({
+                                ...v,
+                                [preference.id]: e.target.value,
+                              }))
+                            }
+                          />
+                          <button
+                            className="preference-edit-button"
+                            type="button"
+                            onClick={() => handleSavePreference(preference.id)}
+                          >
+                            Save
                           </button>
                         </div>
                       ) : null}
@@ -152,9 +299,52 @@ function SettingsPage({ activeScreen, onGoBack, onNavigateScreen }) {
                 })}
               </div>
 
-              <button className="preferences-edit-all-button" type="button">
-                Edit All
-              </button>
+              {editAllMode ? (
+                <div className="preferences-edit-all-panel">
+                  {preferences.map((preference) => (
+                    <div className="preference-edit-all-row" key={preference.id}>
+                      <label className="preference-edit-all-label">
+                        {preference.label}
+                      </label>
+                      <input
+                        className="preference-edit-input"
+                        type="text"
+                        value={editValues[preference.id] ?? preference.value}
+                        onChange={(e) =>
+                          setEditValues((v) => ({
+                            ...v,
+                            [preference.id]: e.target.value,
+                          }))
+                        }
+                      />
+                    </div>
+                  ))}
+                  <div className="preferences-edit-all-actions">
+                    <button
+                      className="preferences-edit-all-button"
+                      type="button"
+                      onClick={handleSaveAllPreferences}
+                    >
+                      Save All
+                    </button>
+                    <button
+                      className="preferences-edit-all-button"
+                      type="button"
+                      onClick={() => setEditAllMode(false)}
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <button
+                  className="preferences-edit-all-button"
+                  type="button"
+                  onClick={() => setEditAllMode(true)}
+                >
+                  Edit All
+                </button>
+              )}
             </div>
           ) : null}
         </div>
