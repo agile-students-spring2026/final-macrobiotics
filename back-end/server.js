@@ -1,6 +1,8 @@
 import express from "express";
 import cors from "cors";
 import { v4 as uuidv4 } from "uuid";
+import { readFileSync } from "fs";
+const flightsData = JSON.parse(readFileSync("./test_data/flights.json", "utf-8"));
 
 const app = express();
 const port = 3000;
@@ -108,6 +110,39 @@ app.delete("/api/bookmarks/:id", (req, res) => {
   } else {
     res.status(404).json({ message: "Bookmark not found." });
   }
+});
+
+app.get("/api/flights", (req, res) => {
+  const { from, to, date } = req.query;
+
+  let results = flightsData;
+  if (from) results = results.filter(f => f.depAirport === from.toLocaleUpperCase());
+  if (to) results = results.filter(f => f.arrAirport === to.toUpperCase());
+  if (date) results = results.filter(f => f.date === date);
+
+  const summary = results.map( f => ({
+    id: f.id,
+    flightNo: f.flightNo,
+    airline: f.airline,
+    logo: f.logo,
+    dep: f.dep,
+    depAirport: f.depAirport,
+    arr: f.arr,
+    arrAirport: f.arrAirport,
+    durationMin: f.durationMin,
+    stops: f.stops,
+    miles: f.miles,
+    class: f.class,
+  }));
+  res.status(200).json({message: "Flights retrieved successfully", data: summary});
+});
+
+app.get("/api/flights/:id", (req,res) => {
+  const flight = flightsData.find(f => f.id === Number(req.params.id));
+  if (!flight) {
+    return res.status(404).json({ message: "Flight not found" });
+  }
+  res.status(200).json({message: "Flight retrieved successfully", data: flight });
 });
 
 if (process.env.NODE_ENV !== "test") {
