@@ -64,6 +64,91 @@ function getBookingProgramLabel(flight) {
     .join(" ");
 }
 
+function getUniqueDelimitedValues(value) {
+  if (!value || typeof value !== "string") {
+    return [];
+  }
+
+  return [...new Set(
+    value
+      .split(",")
+      .map((segment) => segment.trim())
+      .filter(Boolean),
+  )];
+}
+
+function formatUniqueDelimitedValue(value) {
+  return getUniqueDelimitedValues(value).join(", ");
+}
+
+function normalizeChipValue(value) {
+  if (!value) {
+    return "";
+  }
+
+  return value
+    .toLowerCase()
+    .replace(/\bprogram\b/g, "")
+    .replace(/\bairlines?\b/g, "")
+    .replace(/[^a-z0-9]/g, "");
+}
+
+function shouldShowBookingProgram(flight, airlineLabel, bookingProgramLabel) {
+  if (!bookingProgramLabel) {
+    return false;
+  }
+
+  const normalizedProgramLabel = normalizeChipValue(bookingProgramLabel);
+
+  if (!normalizedProgramLabel) {
+    return false;
+  }
+
+  return !getUniqueDelimitedValues(airlineLabel).some((airlineValue) => {
+    const normalizedAirlineValue = normalizeChipValue(airlineValue);
+
+    return (
+      normalizedAirlineValue === normalizedProgramLabel ||
+      normalizedAirlineValue.includes(normalizedProgramLabel) ||
+      normalizedProgramLabel.includes(normalizedAirlineValue)
+    );
+  });
+}
+
+function buildMetaChips(flight) {
+  const chips = [];
+  const airlineLabel = formatUniqueDelimitedValue(flight?.airline);
+  const bookingProgramLabel =
+    flight?.source || flight?.seatAeroSource ? getBookingProgramLabel(flight) : "";
+  const flightNumberLabel = formatUniqueDelimitedValue(flight?.flightNo);
+  const orderedLabels = [
+    flight?.class,
+    airlineLabel,
+    shouldShowBookingProgram(flight, airlineLabel, bookingProgramLabel)
+      ? `Program: ${bookingProgramLabel}`
+      : "",
+    flightNumberLabel,
+    getStopSummary(flight),
+  ];
+
+  orderedLabels.filter(Boolean).forEach((label) => {
+      const normalizedLabel = normalizeChipValue(label);
+
+      if (
+        normalizedLabel &&
+        chips.some(
+          (existingLabel) => normalizeChipValue(existingLabel) === normalizedLabel,
+        )
+      ) {
+        return;
+      }
+
+      chips.push(label);
+    });
+
+  return chips;
+}
+
 function RouteBlock({
   departureTime,
   departureAirport,
@@ -169,6 +254,7 @@ function SearchDetailPage({
   }, [flight]);
 
   const activeFlight = detailedFlight ?? flight;
+  const metaChips = buildMetaChips(activeFlight);
   const itinerary =
     activeFlight?.itinerary?.length > 0
       ? activeFlight.itinerary
@@ -266,23 +352,11 @@ function SearchDetailPage({
           />
 
           <div className="search-detail-meta">
-            {activeFlight.class ? (
-              <span className="history-card__chip">{activeFlight.class}</span>
-            ) : null}
-            {activeFlight.airline ? (
-              <span className="history-card__chip">{activeFlight.airline}</span>
-            ) : null}
-            {activeFlight.source || activeFlight.seatAeroSource ? (
-              <span className="history-card__chip">
-                {getBookingProgramLabel(activeFlight)}
+            {metaChips.map((chipLabel) => (
+              <span key={chipLabel} className="history-card__chip">
+                {chipLabel}
               </span>
-            ) : null}
-            {activeFlight.flightNo ? (
-              <span className="history-card__chip">{activeFlight.flightNo}</span>
-            ) : null}
-            <span className="history-card__chip">
-              {getStopSummary(activeFlight)}
-            </span>
+            ))}
           </div>
         </section>
 
@@ -308,8 +382,10 @@ function SearchDetailPage({
                     arrivalTime={segment.arr}
                     arrivalAirport={segment.arrA}
                     duration={formatDuration(segment.dur)}
-                    metaLabel={index === 0 ? "Operating segment" : "Connection"}
-                    footLabel={segment.flightNo || activeFlight.flightNo}
+                    metaLabel="Flight segment"
+                    footLabel={formatUniqueDelimitedValue(
+                      segment.flightNo || activeFlight.flightNo,
+                    )}
                   />
                 </article>
 

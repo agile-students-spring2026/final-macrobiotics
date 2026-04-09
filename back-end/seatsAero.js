@@ -909,13 +909,14 @@ export async function getSeatsAeroTripDetail(
   const resolvedAirlines = normalizeDelimitedList(normalizedTrip.airline).map(
     (carrierCode) => carriers[carrierCode] ?? carrierCode,
   );
+  const uniqueResolvedAirlines = [...new Set(resolvedAirlines)];
 
   return {
     id: String(tripId),
     seatAeroAvailabilityId: String(availabilityId),
     seatAeroTripId: String(tripId),
     seatAeroSource: normalizedTrip.source,
-    airline: resolvedAirlines.join(", ") || normalizedTrip.airline,
+    airline: uniqueResolvedAirlines.join(", ") || normalizedTrip.airline,
     flightNo: normalizedTrip.flightNo,
     depAirport: normalizedTrip.depAirport,
     arrAirport: normalizedTrip.arrAirport,
