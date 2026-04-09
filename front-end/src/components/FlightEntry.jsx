@@ -1,4 +1,3 @@
-import React, { useState, useEffect } from "react";
 import "./FlightEntry.css";
 
 const FlightEntry = ({
@@ -9,8 +8,17 @@ const FlightEntry = ({
   duration,
   flightNumber,
   miles,
+  airlineCode,
+  airlineLabel,
   logoUrl,
 }) => {
+  const normalizedAirlineCode =
+    typeof airlineCode === "string" ? airlineCode.trim().toUpperCase() : "";
+  const localLogoUrl = normalizedAirlineCode
+    ? `/airline-logos/${normalizedAirlineCode}.svg`
+    : "";
+  const resolvedLogoUrl = logoUrl || localLogoUrl;
+
   return (
     <div className="ticket-container">
       <div className="ticket-top-row">
@@ -53,7 +61,30 @@ const FlightEntry = ({
       <div className="ticket-bottom-row">
         <div className="airline-info">
           <div className="logo-placeholder">
-            <img src={logoUrl} alt="Airline Logo" className="airline-logo" />
+            {resolvedLogoUrl ? (
+              <img
+                src={resolvedLogoUrl}
+                alt={`${airlineLabel || normalizedAirlineCode || "Airline"} logo`}
+                className="airline-logo"
+                onError={(event) => {
+                  event.currentTarget.style.display = "none";
+                  const fallbackElement =
+                    event.currentTarget.parentElement?.querySelector(
+                      ".airline-logo-fallback",
+                    );
+
+                  if (fallbackElement) {
+                    fallbackElement.hidden = false;
+                  }
+                }}
+              />
+            ) : null}
+            <span
+              className="airline-logo-fallback"
+              hidden={Boolean(resolvedLogoUrl)}
+            >
+              {normalizedAirlineCode || "N/A"}
+            </span>
           </div>
           <span className="flight-number">{flightNumber}</span>
         </div>

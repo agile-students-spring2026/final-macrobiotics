@@ -217,6 +217,10 @@ function normalizeDelimitedList(value) {
     .filter(Boolean);
 }
 
+function getPrimaryAirlineCode(value) {
+  return normalizeDelimitedList(value)[0] ?? "";
+}
+
 function normalizeCabinLabel(value) {
   if (!value || typeof value !== "string") {
     return "";
@@ -666,6 +670,7 @@ function normalizeAvailability(availability) {
           durationMin: normalizedTrip.durationMin,
           stops: normalizedTrip.stops,
           miles: normalizedTrip.miles,
+          airlineCode: getPrimaryAirlineCode(normalizedTrip.airline),
           logoUrl: "",
           class: normalizedTrip.class || "Award",
           itinerary: normalizedTrip.itinerary,
@@ -717,6 +722,7 @@ function normalizeAvailability(availability) {
         durationMin: trip.durationMin,
         stops: trip.stops,
         miles: trip.miles ?? cabinOption.mileage,
+        airlineCode: getPrimaryAirlineCode(trip.airline),
         logoUrl: "",
         class: trip.class || cabinOption.label,
         itinerary: trip.itinerary,
@@ -925,6 +931,7 @@ export async function getSeatsAeroTripDetail(
     durationMin: normalizedTrip.durationMin,
     stops: normalizedTrip.stops,
     miles: normalizedTrip.miles,
+    airlineCode: getPrimaryAirlineCode(normalizedTrip.airline),
     logoUrl: "",
     class: normalizedTrip.class,
     itinerary: normalizedTrip.itinerary,

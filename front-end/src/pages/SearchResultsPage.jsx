@@ -370,6 +370,8 @@ function SearchResultsPage({
                     duration={`${Math.floor(flight.durationMin / 60)}h ${flight.durationMin % 60}m`}
                     flightNumber={flight.flightNo}
                     miles={flight.miles.toLocaleString()}
+                    airlineCode={flight.airlineCode}
+                    airlineLabel={flight.airline}
                     logoUrl={flight.logoUrl || ""}
                   />
                 </div>
