@@ -112,6 +112,11 @@ app.put("/api/settings/preferences", (req, res) => {
 
 let bookmarks = [];
 
+// Export bookmarks for testing
+export { bookmarks };
+export { app };
+export default app;
+
 //TODO: Add authenticated route param for users
 app.get("/api/bookmarks", (req, res) => {
   res
@@ -120,19 +125,19 @@ app.get("/api/bookmarks", (req, res) => {
 });
 
 app.post("/api/bookmarks", (req, res) => {
-  console.log("Bookmark request received:\n", {
-    id: req.body.id,
-    flightNo: req.body.flightNo,
-    depAirport: req.body.depAirport,
-    arrAirport: req.body.arrAirport,
-  });
+  // console.log("Bookmark request received:\n", {
+  //   id: req.body.id,
+  //   flightNo: req.body.flightNo,
+  //   depAirport: req.body.depAirport,
+  //   arrAirport: req.body.arrAirport,
+  // });
   if (!bookmarks.some((b) => b.id === req.body.id)) {
     bookmarks.push(req.body);
     res
       .status(201)
       .json({ message: "Bookmark saved successfully.", data: req.body });
   } else {
-    console.log("Bookmark already exists for ID:", req.body.id);
+    // console.log("Bookmark already exists for ID:", req.body.id);
     res.status(400).json({ message: "Bookmark already exists." });
   }
 });
@@ -159,5 +164,3 @@ if (process.env.NODE_ENV !== "test" && isDirectExecution) {
     console.log(`Server running at http://localhost:${port}`);
   });
 }
-
-export { app };
