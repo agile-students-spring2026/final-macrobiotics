@@ -119,11 +119,16 @@
   overflow: hidden;
 }
 
+.logo-placeholder--image {
+  background-color: transparent;
+  border-color: transparent;
+}
+
 .airline-logo {
   width: 100%;
   height: 100%;
   object-fit: contain;
-  padding: 0.3rem;
+  padding: 0.1rem;
 }
 
 .airline-logo-fallback {

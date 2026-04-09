@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import "./FlightEntry.css";
 
 const FlightEntry = ({
@@ -18,6 +19,15 @@ const FlightEntry = ({
     ? `/airline-logos/${normalizedAirlineCode}.svg`
     : "";
   const resolvedLogoUrl = logoUrl || localLogoUrl;
+  const [hasLogoError, setHasLogoError] = useState(false);
+  const [hasLogoLoaded, setHasLogoLoaded] = useState(false);
+
+  useEffect(() => {
+    setHasLogoError(false);
+    setHasLogoLoaded(false);
+  }, [resolvedLogoUrl]);
+
+  const showFallback = !resolvedLogoUrl || hasLogoError;
 
   return (
     <div className="ticket-container">
@@ -60,31 +70,28 @@ const FlightEntry = ({
       {/* Logo, Flight Number, Miles*/}
       <div className="ticket-bottom-row">
         <div className="airline-info">
-          <div className="logo-placeholder">
-            {resolvedLogoUrl ? (
+          <div
+            className={`logo-placeholder${
+              hasLogoLoaded && !showFallback ? " logo-placeholder--image" : ""
+            }`}
+          >
+            {resolvedLogoUrl && !hasLogoError ? (
               <img
                 src={resolvedLogoUrl}
                 alt={`${airlineLabel || normalizedAirlineCode || "Airline"} logo`}
                 className="airline-logo"
-                onError={(event) => {
-                  event.currentTarget.style.display = "none";
-                  const fallbackElement =
-                    event.currentTarget.parentElement?.querySelector(
-                      ".airline-logo-fallback",
-                    );
-
-                  if (fallbackElement) {
-                    fallbackElement.hidden = false;
-                  }
+                onLoad={() => setHasLogoLoaded(true)}
+                onError={() => {
+                  setHasLogoError(true);
+                  setHasLogoLoaded(false);
                 }}
               />
             ) : null}
-            <span
-              className="airline-logo-fallback"
-              hidden={Boolean(resolvedLogoUrl)}
-            >
-              {normalizedAirlineCode || "N/A"}
-            </span>
+            {showFallback ? (
+              <span className="airline-logo-fallback">
+                {normalizedAirlineCode || "N/A"}
+              </span>
+            ) : null}
           </div>
           <span className="flight-number">{flightNumber}</span>
         </div>
