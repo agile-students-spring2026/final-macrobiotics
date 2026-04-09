@@ -164,3 +164,52 @@ if (process.env.NODE_ENV !== "test" && isDirectExecution) {
     console.log(`Server running at http://localhost:${port}`);
   });
 }
+
+app.get("/", ( req, res) => {
+  
+  res.send("Route retrieved successfully");
+});
+
+app.post("/api/login", (req, res) => {
+
+  const {email, password } = req.body;
+
+  if(!email || !password){
+
+    return res.status(400).json({
+
+      message: "Email and Password required.",
+    });
+  }
+
+  res.status(200).json({
+
+    message: "Login successful.",
+    
+    data: {
+      email,
+    },
+  });
+});
+
+app.post("/api/signup", (req, res) => {
+
+  const {email, password } = req.body;
+
+  if(!email || !password){
+
+    return res.status(400).json({
+
+      message: "Email and Password required.",
+    });
+  }
+
+  res.status(201).json({
+
+    message: "Account successfully created.",
+    
+    data: {
+      email,
+    },
+  });
+});
