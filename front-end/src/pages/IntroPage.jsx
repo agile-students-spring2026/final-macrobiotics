@@ -1,4 +1,5 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { loadRecentSearches } from "../utils/recentSearches";
 
 const ACCOUNT_ACTIONS = [
   { id: "signup", label: "Sign up" },
@@ -27,6 +28,7 @@ const TRAVELER_OPTIONS = [
 function IntroPage({ onNavigateScreen, onStartSearch }) {
   const [accountMode, setAccountMode] = useState("signup");
   const [isAdvancedOpen, setIsAdvancedOpen] = useState(false);
+  const [recentSearches, setRecentSearches] = useState([]);
   const dateInputRef = useRef(null);
   const [formValues, setFormValues] = useState({
     from: "",
@@ -37,6 +39,10 @@ function IntroPage({ onNavigateScreen, onStartSearch }) {
     miles: "",
     travelers: "1",
   });
+
+  useEffect(() => {
+    setRecentSearches(loadRecentSearches().slice(0, 4));
+  }, []);
 
   function handleFieldChange(event) {
     const { name, value } = event.target;
@@ -83,6 +89,27 @@ function IntroPage({ onNavigateScreen, onStartSearch }) {
       miles: formValues.miles,
       travelers: formValues.travelers,
     });
+  }
+
+  function handleRecentSearchClick(search) {
+    const nextFormValues = {
+      from: search.origin,
+      to: search.destination,
+      classType: search.cabin === "Any Cabin" ? "" : search.cabin.toLowerCase().replace(/\s+/g, "-"),
+      date: search.travelDate,
+      airlines: search.preferredAirline === "Any Airline" ? "" : search.preferredAirline,
+      miles: search.milesRange === "Any" ? "" : search.milesRange,
+      travelers: String(search.travelers || 1),
+    };
+
+    setFormValues(nextFormValues);
+
+    if (!onStartSearch) {
+      onNavigateScreen && onNavigateScreen("search-results");
+      return;
+    }
+
+    onStartSearch(nextFormValues);
   }
 
   return (
@@ -204,6 +231,24 @@ function IntroPage({ onNavigateScreen, onStartSearch }) {
               Search
             </button>
           </div>
+
+          {recentSearches.length > 0 ? (
+            <div className="intro-advanced">
+              <h3 className="intro-advanced__title">Recent Searches</h3>
+              <div className="intro-recent-searches">
+                {recentSearches.map((search) => (
+                  <button
+                    key={search.id}
+                    type="button"
+                    className="intro-recent-searches__item"
+                    onClick={() => handleRecentSearchClick(search)}
+                  >
+                    {search.origin} to {search.destination}
+                  </button>
+                ))}
+              </div>
+            </div>
+          ) : null}
 
           <div className="intro-advanced">
             <h3 className="intro-advanced__title">

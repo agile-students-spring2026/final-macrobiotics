@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import FlightEntry from "../components/FlightEntry";
 import ScreenQuickActions from "../components/ScreenQuickActions";
 import { apiClient } from "../api/apiClient";
+import { saveRecentSearch } from "../utils/recentSearches";
 
 const SEARCH_STORAGE_KEY = "milely-search-session";
 
@@ -37,6 +38,12 @@ function SearchResultsPage({
   const [stopsFilter, setStopsFilter] = useState([]);
   const [sortBy, setSortBy] = useState("miles");
   const [lastHandledRequestId, setLastHandledRequestId] = useState(null);
+  const [searchContext, setSearchContext] = useState({
+    classType: "",
+    airlines: "",
+    miles: "",
+    travelers: "1",
+  });
 
   const toggleFilter = (arr, setArr, val) =>
     setArr(
@@ -91,10 +98,17 @@ function SearchResultsPage({
   async function executeSearch(searchValues) {
     const normalizedFrom = searchValues.from.trim().toUpperCase();
     const normalizedTo = searchValues.to.trim().toUpperCase();
+    const nextSearchContext = {
+      classType: searchValues.classType ?? searchContext.classType,
+      airlines: searchValues.airlines ?? searchContext.airlines,
+      miles: searchValues.miles ?? searchContext.miles,
+      travelers: searchValues.travelers ?? searchContext.travelers,
+    };
 
     setFrom(normalizedFrom);
     setTo(normalizedTo);
     setDate(searchValues.date);
+    setSearchContext(nextSearchContext);
 
     if (!normalizedFrom || !normalizedTo || !searchValues.date) {
       setFlights([]);
@@ -123,6 +137,21 @@ function SearchResultsPage({
 
       setFlights(Array.isArray(responseJson.data) ? responseJson.data : []);
       setLoadError("");
+      saveRecentSearch({
+        origin: normalizedFrom,
+        destination: normalizedTo,
+        travelDate: searchValues.date,
+        tripType: "One-way",
+        cabin: nextSearchContext.classType
+          ? nextSearchContext.classType
+              .split("-")
+              .map((segment) => segment.charAt(0).toUpperCase() + segment.slice(1))
+              .join(" ")
+          : "Any Cabin",
+        preferredAirline: nextSearchContext.airlines || "Any Airline",
+        travelers: nextSearchContext.travelers || 1,
+        milesRange: nextSearchContext.miles || "Any",
+      });
     } catch (error) {
       setFlights([]);
       setLoadError(error.message || "Unable to load search results.");
@@ -146,6 +175,10 @@ function SearchResultsPage({
       from: searchRequest.from ?? "",
       to: searchRequest.to ?? "",
       date: searchRequest.date ?? "",
+      classType: searchRequest.classType ?? "",
+      airlines: searchRequest.airlines ?? "",
+      miles: searchRequest.miles ?? "",
+      travelers: searchRequest.travelers ?? "1",
     });
   }, [lastHandledRequestId, searchRequest]);
 
