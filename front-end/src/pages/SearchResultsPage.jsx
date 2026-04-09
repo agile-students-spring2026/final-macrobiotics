@@ -5,6 +5,19 @@ import { apiClient } from "../api/apiClient";
 
 const SEARCH_STORAGE_KEY = "milely-search-session";
 
+function getAirlineTokens(value) {
+  if (!value || typeof value !== "string") {
+    return [];
+  }
+
+  return [...new Set(
+    value
+      .split(",")
+      .map((token) => token.trim())
+      .filter(Boolean),
+  )];
+}
+
 function SearchResultsPage({
   activeScreen,
   onGoBack,
@@ -137,13 +150,15 @@ function SearchResultsPage({
   }, [lastHandledRequestId, searchRequest]);
 
   const airlineOptions = useMemo(() => {
-    return [...new Set(flights.map((flight) => flight.airline))];
+    return [...new Set(flights.flatMap((flight) => getAirlineTokens(flight.airline)))];
   }, [flights]);
 
   const filtered = useMemo(() => {
     let f = flights;
     if (airFilter.length)
-      f = f.filter((flight) => airFilter.includes(flight.airline));
+      f = f.filter((flight) =>
+        getAirlineTokens(flight.airline).some((airline) => airFilter.includes(airline)),
+      );
     if (stopsFilter.includes("Nonstop"))
       f = f.filter((flight) => flight.stops === 0);
     if (stopsFilter.includes("1 Stop"))
