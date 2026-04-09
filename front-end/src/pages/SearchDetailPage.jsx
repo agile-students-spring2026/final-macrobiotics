@@ -33,6 +33,10 @@ function getStopSummary(flight) {
 }
 
 function getViaLabel(flight) {
+  if (Array.isArray(flight?.connections) && flight.connections.length > 0) {
+    return `Via ${flight.connections[0]}`;
+  }
+
   if (!flight?.stops || !flight?.itinerary?.length) {
     return "Direct routing";
   }

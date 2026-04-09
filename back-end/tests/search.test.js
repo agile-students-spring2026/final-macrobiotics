@@ -144,6 +144,97 @@ describe("Search API", () => {
     expect(businessResult.miles).to.equal(70000);
   });
 
+  it("prefers AvailabilityTrips mileage and duration from the real Seats.aero cached-search shape", async () => {
+    process.env.SEATS_AERO_API = "test-key";
+    global.fetch = async () =>
+      createJsonResponse({
+        data: [
+          {
+            ID: "avail-real-1",
+            Source: "american",
+            Date: "2026-05-15",
+            Route: {
+              OriginAirport: "JFK",
+              DestinationAirport: "SFO",
+            },
+            YMileageCost: "19000",
+            YAvailable: true,
+            AvailabilityTrips: [
+              {
+                ID: "trip-1",
+                MileageCost: 19000,
+                TotalDuration: 574,
+                Stops: 1,
+                Carriers: "AA, AA",
+                FlightNumbers: "AA1849, AA2907",
+                OriginAirport: "JFK",
+                DestinationAirport: "SFO",
+                Connections: ["DFW"],
+                DepartsAt: "2026-05-15T17:20:00Z",
+                ArrivesAt: "2026-05-15T23:54:00Z",
+                Cabin: "economy",
+                Source: "american",
+              },
+              {
+                ID: "trip-2",
+                MileageCost: 95000,
+                TotalDuration: 401,
+                Stops: 0,
+                Carriers: "AS",
+                FlightNumbers: "AS29",
+                OriginAirport: "JFK",
+                DestinationAirport: "SFO",
+                DepartsAt: "2026-05-15T18:35:00Z",
+                ArrivesAt: "2026-05-15T22:16:00Z",
+                Cabin: "business",
+                Source: "american",
+              },
+            ],
+          },
+        ],
+      });
+
+    const response = await request(app)
+      .get("/api/search/flights")
+      .query({ origin: "JFK", destination: "SFO", date: "2026-05-15" });
+
+    expect(response.status).to.equal(200);
+    expect(response.body.data).to.have.length(2);
+
+    expect(response.body.data[0]).to.include({
+      id: "trip-1",
+      depAirport: "JFK",
+      arrAirport: "SFO",
+      dep: "17:20",
+      arr: "23:54",
+      durationMin: 574,
+      stops: 1,
+      miles: 19000,
+      class: "Economy",
+      flightNo: "AA1849, AA2907",
+      airline: "AA, AA",
+      source: "american",
+    });
+    expect(response.body.data[0].connections).to.deep.equal(["DFW"]);
+    expect(response.body.data[0].itinerary[0]).to.include({
+      depA: "JFK",
+      arrA: "SFO",
+      dep: "17:20",
+      arr: "23:54",
+      dur: "9h 34m",
+    });
+
+    expect(response.body.data[1]).to.include({
+      id: "trip-2",
+      durationMin: 401,
+      miles: 95000,
+      class: "Business",
+      flightNo: "AS29",
+      airline: "AS",
+      stops: 0,
+    });
+  });
+
   it("returns 502 when Seats.aero rejects the upstream request", async () => {
     process.env.SEATS_AERO_API = "test-key";
     global.fetch = async () =>

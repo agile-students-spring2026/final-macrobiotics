@@ -198,6 +198,21 @@ function titleCase(value) {
     .join(" ");
 }
 
+function normalizeDelimitedList(value) {
+  if (Array.isArray(value)) {
+    return value.filter(Boolean).map((item) => String(item).trim()).filter(Boolean);
+  }
+
+  if (typeof value !== "string") {
+    return [];
+  }
+
+  return value
+    .split(",")
+    .map((item) => item.trim())
+    .filter(Boolean);
+}
+
 function normalizeCabinLabel(value) {
   if (!value || typeof value !== "string") {
     return "";
@@ -386,8 +401,11 @@ function normalizeTrip(trip, fallbackValues = {}) {
   const rawSegments = asArray(
     getFirstValue(trip, ["Flights", "flights", "Segments", "segments", "itinerary"]),
   );
+  const connections = normalizeDelimitedList(
+    getFirstValue(trip, ["Connections", "connections"]),
+  ).map((connection) => normalizeAirportCode(connection));
 
-  const itinerary = rawSegments
+  let itinerary = rawSegments
     .map((segment) => normalizeSegment(segment))
     .filter((segment) => segment.depA || segment.arrA || segment.dep || segment.arr);
 
@@ -456,6 +474,8 @@ function normalizeTrip(trip, fallbackValues = {}) {
   const durationMinutes =
     toNumber(
       getFirstValue(trip, [
+        "TotalDuration",
+        "totalDuration",
         "DurationMinutes",
         "durationMinutes",
         "DurationMin",
@@ -464,10 +484,47 @@ function normalizeTrip(trip, fallbackValues = {}) {
       ]),
     ) ?? minutesBetween(departureTimestamp, arrivalTimestamp);
 
-  const flightNumbers = itinerary
-    .map((segment) => segment.flightNo)
-    .filter(Boolean)
-    .join(", ");
+  const tripFlightNumbers = getFirstValue(trip, [
+    "FlightNumbers",
+    "flightNumbers",
+    "flightNo",
+  ]);
+
+  const tripCarriers = getFirstValue(trip, [
+    "Carriers",
+    "carriers",
+    "Airline",
+    "airline",
+    "Carrier",
+    "carrier",
+  ]);
+
+  const flightNumbers =
+    tripFlightNumbers ??
+    itinerary
+      .map((segment) => segment.flightNo)
+      .filter(Boolean)
+      .join(", ");
+
+  if (itinerary.length === 0) {
+    itinerary = [
+      {
+        depA:
+          fallbackValues.depAirport ??
+          fallbackValues.originAirport ??
+          normalizeAirportCode(getFirstValue(trip, ["OriginAirport", "originAirport"])),
+        dep: formatTime(departureTimestamp),
+        arrA:
+          fallbackValues.arrAirport ??
+          fallbackValues.destinationAirport ??
+          normalizeAirportCode(
+            getFirstValue(trip, ["DestinationAirport", "destinationAirport"]),
+          ),
+        arr: formatTime(arrivalTimestamp),
+        dur: formatDurationFromMinutes(durationMinutes),
+      },
+    ].filter((segment) => segment.depA && segment.arrA);
+  }
 
   return {
     depAirport:
@@ -485,16 +542,27 @@ function normalizeTrip(trip, fallbackValues = {}) {
       Math.max(itinerary.length - 1, 0),
     flightNo: flightNumbers || fallbackValues.flightNo || "",
     airline:
+      tripCarriers ??
       getFirstValue(trip, ["Airline", "airline", "Carrier", "carrier"]) ??
       firstSegment?.airline ??
       fallbackValues.airline ??
       "",
+    miles:
+      toNumber(getFirstValue(trip, ["MileageCost", "mileageCost", "Miles", "miles"])) ??
+      fallbackValues.miles,
+    class:
+      normalizeCabinLabel(
+        getFirstValue(trip, ["Cabin", "cabin", "class", "travelClass"]) ??
+          fallbackValues.class,
+      ) || fallbackValues.class,
+    connections,
     itinerary: itinerary.map(({ departureTimestamp, arrivalTimestamp, durationMinutes: _minutes, airline: _airline, ...segment }) => segment),
     travelDate:
       formatDate(
         getFirstValue(trip, ["Date", "date", "DepartsAt", "departsAt"]) ??
           fallbackValues.travelDate,
       ) || fallbackValues.travelDate,
+    source: getFirstValue(trip, ["Source", "source"]) ?? fallbackValues.source,
   };
 }
 
@@ -548,7 +616,58 @@ function normalizeAvailability(availability) {
     originAirport,
     destinationAirport,
     travelDate,
+    source,
   };
+
+  const availabilityTrips = asArray(
+    getFirstValue(availability, ["AvailabilityTrips", "availabilityTrips"]),
+  );
+
+  if (availabilityTrips.length > 0) {
+    return availabilityTrips
+      .map((trip, tripIndex) => {
+        const normalizedTrip = normalizeTrip(trip, fallbackTripValues);
+        const tripId = String(
+          getFirstValue(trip, ["ID", "id"]) ?? `${availabilityId}:trip:${tripIndex}`,
+        );
+
+        return {
+          id: tripId,
+          seatAeroAvailabilityId: availabilityId,
+          seatAeroTripId: tripId,
+          seatAeroSource: normalizedTrip.source || source,
+          airline:
+            normalizedTrip.airline || titleCase(normalizedTrip.source) || "Seats.aero",
+          flightNo:
+            normalizedTrip.flightNo ||
+            normalizedTrip.airline ||
+            titleCase(normalizedTrip.source) ||
+            titleCase(source),
+          depAirport: normalizedTrip.depAirport || originAirport,
+          arrAirport: normalizedTrip.arrAirport || destinationAirport,
+          dep: normalizedTrip.dep,
+          arr: normalizedTrip.arr,
+          durationMin: normalizedTrip.durationMin,
+          stops: normalizedTrip.stops,
+          miles: normalizedTrip.miles,
+          logoUrl: "",
+          class: normalizedTrip.class || "Award",
+          itinerary: normalizedTrip.itinerary,
+          travelDate: normalizedTrip.travelDate || travelDate,
+          source: normalizedTrip.source || source,
+          connections: normalizedTrip.connections,
+        };
+      })
+      .filter(
+        (trip) =>
+          trip.depAirport &&
+          trip.arrAirport &&
+          Number.isFinite(trip.durationMin) &&
+          trip.durationMin > 0 &&
+          Number.isFinite(trip.miles) &&
+          trip.miles > 0,
+      );
+  }
 
   const genericTrips = asArray(getFirstValue(availability, ["Trips", "trips"]));
 
@@ -579,15 +698,16 @@ function normalizeAvailability(availability) {
       arrAirport: trip.arrAirport || destinationAirport,
       dep: trip.dep,
       arr: trip.arr,
-      durationMin: trip.durationMin,
-      stops: trip.stops,
-      miles: cabinOption.mileage ?? 0,
-      logoUrl: "",
-      class: cabinOption.label,
-      itinerary: trip.itinerary,
-      travelDate: trip.travelDate || travelDate,
-      source,
-    }));
+        durationMin: trip.durationMin,
+        stops: trip.stops,
+        miles: trip.miles ?? cabinOption.mileage,
+        logoUrl: "",
+        class: trip.class || cabinOption.label,
+        itinerary: trip.itinerary,
+        travelDate: trip.travelDate || travelDate,
+        source: trip.source || source,
+        connections: trip.connections,
+      }));
   });
 }
 
@@ -599,7 +719,9 @@ export function normalizeSeatsAeroResults(payload) {
         flight.depAirport &&
         flight.arrAirport &&
         Number.isFinite(flight.miles) &&
-        flight.miles >= 0,
+        flight.miles > 0 &&
+        Number.isFinite(flight.durationMin) &&
+        flight.durationMin > 0,
     );
 }
 
