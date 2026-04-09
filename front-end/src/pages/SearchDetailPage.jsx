@@ -1,5 +1,5 @@
-import React, { useState } from "react";
 import { apiClient } from "../api/apiClient";
+import ScreenQuickActions from "../components/ScreenQuickActions";
 
 function formatDuration(durationValue) {
   if (!durationValue) {
@@ -39,6 +39,20 @@ function getViaLabel(flight) {
 
   const firstStop = flight.itinerary[0]?.arrA;
   return firstStop ? `Via ${firstStop}` : "Connecting itinerary";
+}
+
+function getBookingProgramLabel(flight) {
+  const programLabel = flight?.source || flight?.seatAeroSource;
+
+  if (!programLabel) {
+    return flight?.airline || "carrier";
+  }
+
+  return programLabel
+    .split(/[\s_-]+/)
+    .filter(Boolean)
+    .map((segment) => segment.charAt(0).toUpperCase() + segment.slice(1))
+    .join(" ");
 }
 
 function RouteBlock({
@@ -87,6 +101,21 @@ function SearchDetailPage({
   onGoBack,
   onNavigateScreen,
 }) {
+  const itinerary =
+    flight?.itinerary?.length > 0
+      ? flight.itinerary
+      : flight
+        ? [
+            {
+              depA: flight.depAirport,
+              dep: flight.dep,
+              arrA: flight.arrAirport,
+              arr: flight.arr,
+              dur: formatDurationFromMinutes(flight.durationMin),
+            },
+          ]
+        : [];
+
   function handleBackClick() {
     if (onGoBack) {
       onGoBack("search-results");
@@ -161,9 +190,20 @@ function SearchDetailPage({
           />
 
           <div className="search-detail-meta">
-            <span className="history-card__chip">{flight.class}</span>
-            <span className="history-card__chip">{flight.airline}</span>
-            <span className="history-card__chip">{flight.flightNo}</span>
+            {flight.class ? (
+              <span className="history-card__chip">{flight.class}</span>
+            ) : null}
+            {flight.airline ? (
+              <span className="history-card__chip">{flight.airline}</span>
+            ) : null}
+            {flight.source || flight.seatAeroSource ? (
+              <span className="history-card__chip">
+                {getBookingProgramLabel(flight)}
+              </span>
+            ) : null}
+            {flight.flightNo ? (
+              <span className="history-card__chip">{flight.flightNo}</span>
+            ) : null}
             <span className="history-card__chip">{getStopSummary(flight)}</span>
           </div>
         </section>
@@ -177,7 +217,7 @@ function SearchDetailPage({
           </div>
 
           <div className="search-detail-segments">
-            {flight.itinerary.map((segment, index) => (
+            {itinerary.map((segment, index) => (
               <div key={`${segment.depA}-${segment.arrA}-${index}`}>
                 <article className="search-detail-segment">
                   <div className="search-detail-segment__badge">
@@ -191,7 +231,7 @@ function SearchDetailPage({
                     arrivalAirport={segment.arrA}
                     duration={formatDuration(segment.dur)}
                     metaLabel={index === 0 ? "Operating segment" : "Connection"}
-                    footLabel={`${flight.airline} ${flight.flightNo}`}
+                    footLabel={flight.flightNo}
                   />
                 </article>
 
@@ -226,9 +266,11 @@ function SearchDetailPage({
             <button
               type="button"
               className="search-detail-book-button"
-              onClick={() => alert(`Booking via ${flight.airline}`)}
+              onClick={() =>
+                alert(`Booking via ${getBookingProgramLabel(flight)}`)
+              }
             >
-              Book via {flight.airline}
+              Book via {getBookingProgramLabel(flight)}
             </button>
           </div>
         </section>
@@ -238,4 +280,3 @@ function SearchDetailPage({
 }
 
 export default SearchDetailPage;
-import ScreenQuickActions from "../components/ScreenQuickActions";

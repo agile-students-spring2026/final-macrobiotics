@@ -24,7 +24,7 @@ const TRAVELER_OPTIONS = [
   { value: "8", label: "8" },
 ];
 
-function IntroPage({ onNavigateScreen }) {
+function IntroPage({ onNavigateScreen, onStartSearch }) {
   const [accountMode, setAccountMode] = useState("signup");
   const [isAdvancedOpen, setIsAdvancedOpen] = useState(false);
   const dateInputRef = useRef(null);
@@ -42,7 +42,8 @@ function IntroPage({ onNavigateScreen }) {
     const { name, value } = event.target;
     setFormValues((currentValues) => ({
       ...currentValues,
-      [name]: value,
+      [name]:
+        name === "from" || name === "to" ? value.toUpperCase() : value,
     }));
   }
 
@@ -65,6 +66,23 @@ function IntroPage({ onNavigateScreen }) {
     }
 
     dateInputRef.current.focus();
+  }
+
+  function handleSearchClick() {
+    if (!onStartSearch) {
+      onNavigateScreen && onNavigateScreen("search-results");
+      return;
+    }
+
+    onStartSearch({
+      from: formValues.from.trim().toUpperCase(),
+      to: formValues.to.trim().toUpperCase(),
+      date: formValues.date,
+      classType: formValues.classType,
+      airlines: formValues.airlines,
+      miles: formValues.miles,
+      travelers: formValues.travelers,
+    });
   }
 
   return (
@@ -106,7 +124,8 @@ function IntroPage({ onNavigateScreen }) {
                 type="text"
                 value={formValues.from}
                 onChange={handleFieldChange}
-                placeholder="Departure city"
+                placeholder="Departure airport"
+                maxLength={3}
               />
             </label>
 
@@ -117,7 +136,8 @@ function IntroPage({ onNavigateScreen }) {
                 type="text"
                 value={formValues.to}
                 onChange={handleFieldChange}
-                placeholder="Destination"
+                placeholder="Arrival airport"
+                maxLength={3}
               />
             </label>
 
@@ -179,9 +199,7 @@ function IntroPage({ onNavigateScreen }) {
             <button
               type="button"
               className="intro-primary-button"
-              onClick={() =>
-                onNavigateScreen && onNavigateScreen("search-results")
-              }
+              onClick={handleSearchClick}
             >
               Search
             </button>

@@ -5,7 +5,7 @@
   "main": "server.js",
   "scripts": {
     "start": "nodemon server.js",
-    "test": "NODE_ENV=test c8 mocha 'tests/**/*.test.js'"
+    "test": "c8 mocha \"tests/**/*.test.js\""
   },
   "keywords": [],
   "author": "",

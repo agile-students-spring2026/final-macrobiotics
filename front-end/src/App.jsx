@@ -32,6 +32,7 @@ function App() {
   const [activeScreen, setActiveScreen] = useState("intro");
   const [navigationHistory, setNavigationHistory] = useState([]);
   const [selectedFlight, setSelectedFlight] = useState(null);
+  const [searchRequest, setSearchRequest] = useState(null);
 
   const ActiveScreen = useMemo(
     () => SCREEN_COMPONENTS[activeScreen] ?? IntroPage,
@@ -65,6 +66,18 @@ function App() {
     handleNavigateScreen("search-detail");
   };
 
+  function handleStartSearch(searchCriteria) {
+    setSearchRequest({
+      requestId: Date.now(),
+      ...searchCriteria,
+    });
+    setSelectedFlight(null);
+
+    if (activeScreen !== "search-results") {
+      handleNavigateScreen("search-results");
+    }
+  }
+
   return (
     <AppFrame
       screens={SCREENS}
@@ -76,6 +89,8 @@ function App() {
         onNavigateScreen={handleNavigateScreen}
         onGoBack={handleGoBack}
         onSelectFlight={handleSelectFlight}
+        onStartSearch={handleStartSearch}
+        searchRequest={searchRequest}
         flight={selectedFlight}
       />
     </AppFrame>

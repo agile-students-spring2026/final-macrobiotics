@@ -1,9 +1,16 @@
 import express from "express";
 import cors from "cors";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 import { v4 as uuidv4 } from "uuid";
+import { searchSeatsAeroFlights } from "./seatsAero.js";
 
 const app = express();
 const port = 3000;
+const currentFilePath = fileURLToPath(import.meta.url);
+const isDirectExecution =
+  process.argv[1] != null &&
+  path.resolve(process.argv[1]) === currentFilePath;
 
 app.use(cors({ origin: "http://localhost:5173" }));
 app.use(express.json());
@@ -11,6 +18,25 @@ app.use(express.urlencoded({ extended: true }));
 
 app.get("/", (req, res) => {
   res.send("API route reached successfully");
+});
+
+app.get("/api/search/flights", async (req, res) => {
+  try {
+    const flights = await searchSeatsAeroFlights({
+      origin: req.query.origin,
+      destination: req.query.destination,
+      date: req.query.date,
+    });
+
+    res.status(200).json({
+      message: "Flights retrieved successfully",
+      data: flights,
+    });
+  } catch (error) {
+    res.status(error.statusCode ?? 500).json({
+      message: error.message ?? "Unable to retrieve flights.",
+    });
+  }
 });
 
 // Mock user settings (Sprint 2: in-memory, no persistence required)
@@ -110,7 +136,7 @@ app.delete("/api/bookmarks/:id", (req, res) => {
   }
 });
 
-if (process.env.NODE_ENV !== "test") {
+if (process.env.NODE_ENV !== "test" && isDirectExecution) {
   app.listen(port, () => {
     console.log(`Server running at http://localhost:${port}`);
   });

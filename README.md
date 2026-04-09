@@ -62,6 +62,12 @@ npm run build
 
 The backend must be running alongside the frontend for full functionality. Open a **separate terminal** and follow these steps.
 
+Before starting the backend, create a root-level `.env` file with your Seats.aero partner API key:
+
+```env
+SEATS_AERO_API=your_partner_api_key_here
+```
+
 ### Windows
 
 1. Open PowerShell in the project root.
