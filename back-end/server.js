@@ -9,8 +9,7 @@ const app = express();
 const port = 3000;
 const currentFilePath = fileURLToPath(import.meta.url);
 const isDirectExecution =
-  process.argv[1] != null &&
-  path.resolve(process.argv[1]) === currentFilePath;
+  process.argv[1] != null && path.resolve(process.argv[1]) === currentFilePath;
 
 app.use(cors({ origin: "http://localhost:5173" }));
 app.use(express.json());
@@ -39,23 +38,26 @@ app.get("/api/search/flights", async (req, res) => {
   }
 });
 
-app.get("/api/search/flights/:availabilityId/trips/:tripId", async (req, res) => {
-  try {
-    const flight = await getSeatsAeroTripDetail({
-      availabilityId: req.params.availabilityId,
-      tripId: req.params.tripId,
-    });
+app.get(
+  "/api/search/flights/:availabilityId/trips/:tripId",
+  async (req, res) => {
+    try {
+      const flight = await getSeatsAeroTripDetail({
+        availabilityId: req.params.availabilityId,
+        tripId: req.params.tripId,
+      });
 
-    res.status(200).json({
-      message: "Flight details retrieved successfully",
-      data: flight,
-    });
-  } catch (error) {
-    res.status(error.statusCode ?? 500).json({
-      message: error.message ?? "Unable to retrieve flight details.",
-    });
-  }
-});
+      res.status(200).json({
+        message: "Flight details retrieved successfully",
+        data: flight,
+      });
+    } catch (error) {
+      res.status(error.statusCode ?? 500).json({
+        message: error.message ?? "Unable to retrieve flight details.",
+      });
+    }
+  },
+);
 
 // Mock user settings (Sprint 2: in-memory, no persistence required)
 const userSettings = {
@@ -63,7 +65,11 @@ const userSettings = {
   preferences: [
     { id: "airport", label: "Default Airport", value: "JFK" },
     { id: "airline", label: "Default Airline", value: "Delta" },
-    { id: "card", label: "Default Credit Card", value: "Chase Sapphire Preferred" },
+    {
+      id: "card",
+      label: "Default Credit Card",
+      value: "Chase Sapphire Preferred",
+    },
   ],
 };
 
@@ -165,27 +171,22 @@ if (process.env.NODE_ENV !== "test" && isDirectExecution) {
   });
 }
 
-app.get("/", ( req, res) => {
-  
+app.get("/", (req, res) => {
   res.send("Route retrieved successfully");
 });
 
 app.post("/api/login", (req, res) => {
+  const { email, password } = req.body;
 
-  const {email, password } = req.body;
-
-  if(!email || !password){
-
+  if (!email || !password) {
     return res.status(400).json({
-
       message: "Email and Password required.",
     });
   }
 
   res.status(200).json({
-
     message: "Login successful.",
-    
+
     data: {
       email,
     },
@@ -193,21 +194,17 @@ app.post("/api/login", (req, res) => {
 });
 
 app.post("/api/signup", (req, res) => {
+  const { email, password } = req.body;
 
-  const {email, password } = req.body;
-
-  if(!email || !password){
-
+  if (!email || !password) {
     return res.status(400).json({
-
       message: "Email and Password required.",
     });
   }
 
   res.status(201).json({
-
     message: "Account successfully created.",
-    
+
     data: {
       email,
     },

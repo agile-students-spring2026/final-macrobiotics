@@ -55,69 +55,72 @@ const BookmarksPage = ({
 
   return (
     <section className="screen bookmarks-screen">
-      <div className="panel-utility-row panel-utility-row--split">
-        <button
-          type="button"
-          className="history-back-button"
-          onClick={() => onGoBack && onGoBack("intro")}
-        >
-          Back
-        </button>
-
-        <ScreenQuickActions
-          activeScreen={activeScreen}
-          onNavigateScreen={onNavigateScreen}
-        />
-      </div>
-
-      <header className="bookmarks-header">
-        <p className="bookmarks-header__eyebrow">Saved award options</p>
-        <h2 className="bookmarks-header__title">Bookmarks</h2>
-        <p className="bookmarks-header__copy">
-          Keep your shortlisted flights here so they are easy to compare later.
-        </p>
-      </header>
-
-      <div className="bookmarks-results-container">
-        {flights?.map((flight) => (
-          <div
-            key={flight.id}
-            className="search-results-list__item flight-entry-container"
-            onClick={() => onSelectFlight(flight)}
+      <div className="bookmarks-panel">
+        <div className="panel-utility-row panel-utility-row--split">
+          <button
+            type="button"
+            className="history-back-button"
+            onClick={() => onGoBack && onGoBack("intro")}
           >
-            <FlightEntry
-              departureTime={flight.dep}
-              departureAirport={flight.depAirport}
-              arrivalTime={flight.arr}
-              arrivalAirport={flight.arrAirport}
-              duration={`${Math.floor(flight.durationMin / 60)}h ${flight.durationMin % 60}m`}
-              flightNumber={flight.flightNo}
-              miles={flight.miles.toLocaleString()}
-              airlineCode={flight.airlineCode}
-              airlineLabel={flight.airline}
-              logoUrl={flight.logoUrl || ""}
-            />
-            <button
-              className="delete-button"
-              aria-label="Delete flight"
-              onClick={(e) => {
-                e.stopPropagation();
-                handleDeleteBookmark(flight);
-              }}
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 24 24"
-                className="trash-icon"
-              >
-                <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z" />
-              </svg>
-            </button>
-          </div>
-        ))}
+            Back
+          </button>
 
-        {flights.length === 0 && !loading && <p>No bookmarks found.</p>}
-        {loading && <p>Loading flights...</p>}
+          <ScreenQuickActions
+            activeScreen={activeScreen}
+            onNavigateScreen={onNavigateScreen}
+          />
+        </div>
+
+        <header className="bookmarks-header">
+          <p className="bookmarks-header__eyebrow">Saved award options</p>
+          <h2 className="bookmarks-header__title">Bookmarks</h2>
+          <p className="bookmarks-header__copy">
+            Keep your shortlisted flights here so they are easy to compare
+            later.
+          </p>
+        </header>
+
+        <div className="bookmarks-results-container">
+          {flights?.map((flight) => (
+            <div
+              key={flight.id}
+              className="search-results-list__item flight-entry-container"
+              onClick={() => onSelectFlight(flight)}
+            >
+              <FlightEntry
+                departureTime={flight.dep}
+                departureAirport={flight.depAirport}
+                arrivalTime={flight.arr}
+                arrivalAirport={flight.arrAirport}
+                duration={`${Math.floor(flight.durationMin / 60)}h ${flight.durationMin % 60}m`}
+                flightNumber={flight.flightNo}
+                miles={flight.miles.toLocaleString()}
+                airlineCode={flight.airlineCode}
+                airlineLabel={flight.airline}
+                logoUrl={flight.logoUrl || ""}
+              />
+              <button
+                className="delete-button"
+                aria-label="Delete flight"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleDeleteBookmark(flight);
+                }}
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  className="trash-icon"
+                >
+                  <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z" />
+                </svg>
+              </button>
+            </div>
+          ))}
+
+          {flights.length === 0 && !loading && <p>No bookmarks found.</p>}
+          {loading && <p>Loading flights...</p>}
+        </div>
       </div>
     </section>
   );

@@ -4,7 +4,7 @@ import app, { bookmarks } from "../server.js";
 
 const { expect } = chai;
 
-describe("Server Routes", () => {
+describe("Bookmarks API", () => {
   beforeEach(() => {
     bookmarks.length = 0;
   });
