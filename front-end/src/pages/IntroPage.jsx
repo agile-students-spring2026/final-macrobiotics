@@ -1,4 +1,5 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { loadRecentSearches } from "../utils/recentSearches";
 
 const ACCOUNT_ACTIONS = [
   { id: "signup", label: "Sign up" },
@@ -24,9 +25,10 @@ const TRAVELER_OPTIONS = [
   { value: "8", label: "8" },
 ];
 
-function IntroPage({ onNavigateScreen }) {
+function IntroPage({ onNavigateScreen, onStartSearch }) {
   const [accountMode, setAccountMode] = useState("signup");
   const [isAdvancedOpen, setIsAdvancedOpen] = useState(false);
+  const [recentSearches, setRecentSearches] = useState([]);
   const dateInputRef = useRef(null);
   const [formValues, setFormValues] = useState({
     from: "",
@@ -38,11 +40,16 @@ function IntroPage({ onNavigateScreen }) {
     travelers: "1",
   });
 
+  useEffect(() => {
+    setRecentSearches(loadRecentSearches().slice(0, 4));
+  }, []);
+
   function handleFieldChange(event) {
     const { name, value } = event.target;
     setFormValues((currentValues) => ({
       ...currentValues,
-      [name]: value,
+      [name]:
+        name === "from" || name === "to" ? value.toUpperCase() : value,
     }));
   }
 
@@ -65,6 +72,44 @@ function IntroPage({ onNavigateScreen }) {
     }
 
     dateInputRef.current.focus();
+  }
+
+  function handleSearchClick() {
+    if (!onStartSearch) {
+      onNavigateScreen && onNavigateScreen("search-results");
+      return;
+    }
+
+    onStartSearch({
+      from: formValues.from.trim().toUpperCase(),
+      to: formValues.to.trim().toUpperCase(),
+      date: formValues.date,
+      classType: formValues.classType,
+      airlines: formValues.airlines,
+      miles: formValues.miles,
+      travelers: formValues.travelers,
+    });
+  }
+
+  function handleRecentSearchClick(search) {
+    const nextFormValues = {
+      from: search.origin,
+      to: search.destination,
+      classType: search.cabin === "Any Cabin" ? "" : search.cabin.toLowerCase().replace(/\s+/g, "-"),
+      date: search.travelDate,
+      airlines: search.preferredAirline === "Any Airline" ? "" : search.preferredAirline,
+      miles: search.milesRange === "Any" ? "" : search.milesRange,
+      travelers: String(search.travelers || 1),
+    };
+
+    setFormValues(nextFormValues);
+
+    if (!onStartSearch) {
+      onNavigateScreen && onNavigateScreen("search-results");
+      return;
+    }
+
+    onStartSearch(nextFormValues);
   }
 
   return (
@@ -106,7 +151,8 @@ function IntroPage({ onNavigateScreen }) {
                 type="text"
                 value={formValues.from}
                 onChange={handleFieldChange}
-                placeholder="Departure city"
+                placeholder="Departure airport"
+                maxLength={3}
               />
             </label>
 
@@ -117,7 +163,8 @@ function IntroPage({ onNavigateScreen }) {
                 type="text"
                 value={formValues.to}
                 onChange={handleFieldChange}
-                placeholder="Destination"
+                placeholder="Arrival airport"
+                maxLength={3}
               />
             </label>
 
@@ -179,13 +226,29 @@ function IntroPage({ onNavigateScreen }) {
             <button
               type="button"
               className="intro-primary-button"
-              onClick={() =>
-                onNavigateScreen && onNavigateScreen("search-results")
-              }
+              onClick={handleSearchClick}
             >
               Search
             </button>
           </div>
+
+          {recentSearches.length > 0 ? (
+            <div className="intro-advanced">
+              <h3 className="intro-advanced__title">Recent Searches</h3>
+              <div className="intro-recent-searches">
+                {recentSearches.map((search) => (
+                  <button
+                    key={search.id}
+                    type="button"
+                    className="intro-recent-searches__item"
+                    onClick={() => handleRecentSearchClick(search)}
+                  >
+                    {search.origin} to {search.destination}
+                  </button>
+                ))}
+              </div>
+            </div>
+          ) : null}
 
           <div className="intro-advanced">
             <h3 className="intro-advanced__title">

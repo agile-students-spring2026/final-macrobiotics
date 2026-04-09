@@ -1,12 +1,30 @@
 import { useEffect, useMemo, useState } from "react";
 import FlightEntry from "../components/FlightEntry";
 import ScreenQuickActions from "../components/ScreenQuickActions";
+import { apiClient } from "../api/apiClient";
+import { saveRecentSearch } from "../utils/recentSearches";
+
+const SEARCH_STORAGE_KEY = "milely-search-session";
+
+function getAirlineTokens(value) {
+  if (!value || typeof value !== "string") {
+    return [];
+  }
+
+  return [...new Set(
+    value
+      .split(",")
+      .map((token) => token.trim())
+      .filter(Boolean),
+  )];
+}
 
 function SearchResultsPage({
   activeScreen,
   onGoBack,
   onNavigateScreen,
   onSelectFlight,
+  searchRequest,
 }) {
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
@@ -14,10 +32,18 @@ function SearchResultsPage({
   const [isAdvancedOpen, setIsAdvancedOpen] = useState(false);
   const [flights, setFlights] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [hasSearched, setHasSearched] = useState(false);
   const [loadError, setLoadError] = useState("");
   const [airFilter, setAirFilter] = useState([]);
   const [stopsFilter, setStopsFilter] = useState([]);
   const [sortBy, setSortBy] = useState("miles");
+  const [lastHandledRequestId, setLastHandledRequestId] = useState(null);
+  const [searchContext, setSearchContext] = useState({
+    classType: "",
+    airlines: "",
+    miles: "",
+    travelers: "1",
+  });
 
   const toggleFilter = (arr, setArr, val) =>
     setArr(
@@ -25,49 +51,147 @@ function SearchResultsPage({
     );
 
   useEffect(() => {
-    let isMounted = true;
+    const savedSearch = window.sessionStorage.getItem(SEARCH_STORAGE_KEY);
 
-    async function loadFlights() {
-      try {
-        const response = await fetch("/mock/search-results.json");
-
-        if (!response.ok) {
-          throw new Error("Unable to load search results.");
-        }
-
-        const searchResults = await response.json();
-
-        if (isMounted) {
-          setFlights(searchResults);
-          setLoadError("");
-        }
-      } catch (error) {
-        if (isMounted) {
-          setFlights([]);
-          setLoadError("Unable to load search results.");
-        }
-      } finally {
-        if (isMounted) {
-          setIsLoading(false);
-        }
-      }
+    if (!savedSearch) {
+      setIsLoading(false);
+      return;
     }
 
-    loadFlights();
+    try {
+      const parsedSearch = JSON.parse(savedSearch);
 
-    return () => {
-      isMounted = false;
-    };
+      setFrom(parsedSearch.from ?? "");
+      setTo(parsedSearch.to ?? "");
+      setDate(parsedSearch.date ?? "");
+      setFlights(Array.isArray(parsedSearch.flights) ? parsedSearch.flights : []);
+      setHasSearched(Boolean(parsedSearch.hasSearched));
+      setLoadError(parsedSearch.loadError ?? "");
+    } catch {
+      window.sessionStorage.removeItem(SEARCH_STORAGE_KEY);
+      setFlights([]);
+      setHasSearched(false);
+      setLoadError("");
+    } finally {
+      setIsLoading(false);
+    }
   }, []);
 
+  useEffect(() => {
+    if (isLoading) {
+      return;
+    }
+
+    window.sessionStorage.setItem(
+      SEARCH_STORAGE_KEY,
+      JSON.stringify({
+        from,
+        to,
+        date,
+        flights,
+        hasSearched,
+        loadError,
+      }),
+    );
+  }, [date, flights, from, hasSearched, isLoading, loadError, to]);
+
+  async function executeSearch(searchValues) {
+    const normalizedFrom = searchValues.from.trim().toUpperCase();
+    const normalizedTo = searchValues.to.trim().toUpperCase();
+    const nextSearchContext = {
+      classType: searchValues.classType ?? searchContext.classType,
+      airlines: searchValues.airlines ?? searchContext.airlines,
+      miles: searchValues.miles ?? searchContext.miles,
+      travelers: searchValues.travelers ?? searchContext.travelers,
+    };
+
+    setFrom(normalizedFrom);
+    setTo(normalizedTo);
+    setDate(searchValues.date);
+    setSearchContext(nextSearchContext);
+
+    if (!normalizedFrom || !normalizedTo || !searchValues.date) {
+      setFlights([]);
+      setHasSearched(false);
+      setLoadError("Origin, destination, and date are required.");
+      return;
+    }
+
+    setIsLoading(true);
+    setHasSearched(true);
+    setLoadError("");
+
+    try {
+      const queryParams = new URLSearchParams({
+        origin: normalizedFrom,
+        destination: normalizedTo,
+        date: searchValues.date,
+      });
+
+      const response = await apiClient(`/api/search/flights?${queryParams.toString()}`);
+      const responseJson = await response.json();
+
+      if (!response.ok) {
+        throw new Error(responseJson.message || "Unable to load search results.");
+      }
+
+      setFlights(Array.isArray(responseJson.data) ? responseJson.data : []);
+      setLoadError("");
+      saveRecentSearch({
+        origin: normalizedFrom,
+        destination: normalizedTo,
+        travelDate: searchValues.date,
+        tripType: "One-way",
+        cabin: nextSearchContext.classType
+          ? nextSearchContext.classType
+              .split("-")
+              .map((segment) => segment.charAt(0).toUpperCase() + segment.slice(1))
+              .join(" ")
+          : "Any Cabin",
+        preferredAirline: nextSearchContext.airlines || "Any Airline",
+        travelers: nextSearchContext.travelers || 1,
+        milesRange: nextSearchContext.miles || "Any",
+      });
+    } catch (error) {
+      setFlights([]);
+      setLoadError(error.message || "Unable to load search results.");
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
+  async function handleSearchSubmit(event) {
+    event.preventDefault();
+    await executeSearch({ from, to, date });
+  }
+
+  useEffect(() => {
+    if (!searchRequest?.requestId || searchRequest.requestId === lastHandledRequestId) {
+      return;
+    }
+
+    setLastHandledRequestId(searchRequest.requestId);
+    executeSearch({
+      from: searchRequest.from ?? "",
+      to: searchRequest.to ?? "",
+      date: searchRequest.date ?? "",
+      classType: searchRequest.classType ?? "",
+      airlines: searchRequest.airlines ?? "",
+      miles: searchRequest.miles ?? "",
+      travelers: searchRequest.travelers ?? "1",
+    });
+  }, [lastHandledRequestId, searchRequest]);
+
   const airlineOptions = useMemo(() => {
-    return [...new Set(flights.map((flight) => flight.airline))];
+    return [...new Set(flights.flatMap((flight) => getAirlineTokens(flight.airline)))];
   }, [flights]);
 
   const filtered = useMemo(() => {
     let f = flights;
     if (airFilter.length)
-      f = f.filter((flight) => airFilter.includes(flight.airline));
+      f = f.filter((flight) =>
+        getAirlineTokens(flight.airline).some((airline) => airFilter.includes(airline)),
+      );
     if (stopsFilter.includes("Nonstop"))
       f = f.filter((flight) => flight.stops === 0);
     if (stopsFilter.includes("1 Stop"))
@@ -111,7 +235,7 @@ function SearchResultsPage({
 
         <form
           className="search-results-form"
-          onSubmit={(event) => event.preventDefault()}
+          onSubmit={handleSearchSubmit}
         >
           <div className="search-results-form__grid">
             <label className="intro-field">
@@ -119,8 +243,9 @@ function SearchResultsPage({
               <input
                 type="text"
                 value={from}
-                onChange={(event) => setFrom(event.target.value)}
+                onChange={(event) => setFrom(event.target.value.toUpperCase())}
                 placeholder="Departure airport"
+                maxLength={3}
               />
             </label>
 
@@ -129,8 +254,9 @@ function SearchResultsPage({
               <input
                 type="text"
                 value={to}
-                onChange={(event) => setTo(event.target.value)}
+                onChange={(event) => setTo(event.target.value.toUpperCase())}
                 placeholder="Arrival airport"
+                maxLength={3}
               />
             </label>
 
@@ -150,8 +276,12 @@ function SearchResultsPage({
               >
                 Search
               </span>
-              <button type="submit" className="intro-primary-button">
-                Update
+              <button
+                type="submit"
+                className="intro-primary-button"
+                disabled={isLoading}
+              >
+                {isLoading ? "Searching..." : "Search"}
               </button>
             </div>
           </div>
@@ -273,15 +403,23 @@ function SearchResultsPage({
                     duration={`${Math.floor(flight.durationMin / 60)}h ${flight.durationMin % 60}m`}
                     flightNumber={flight.flightNo}
                     miles={flight.miles.toLocaleString()}
+                    airlineCode={flight.airlineCode}
+                    airlineLabel={flight.airline}
                     logoUrl={flight.logoUrl || ""}
                   />
                 </div>
               ))
             : null}
 
-          {!isLoading && !loadError && filtered.length === 0 ? (
+          {!isLoading && !loadError && !hasSearched ? (
             <div className="history-empty-state">
-              No flights match the current filters.
+              Enter an origin, destination, and date to search award flights.
+            </div>
+          ) : null}
+
+          {!isLoading && !loadError && hasSearched && filtered.length === 0 ? (
+            <div className="history-empty-state">
+              No flights matched that search or the current filters.
             </div>
           ) : null}
         </div>

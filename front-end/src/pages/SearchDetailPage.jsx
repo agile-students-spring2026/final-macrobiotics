@@ -1,5 +1,6 @@
-import React, { useState } from "react";
+import { useEffect, useState } from "react";
 import { apiClient } from "../api/apiClient";
+import ScreenQuickActions from "../components/ScreenQuickActions";
 
 function formatDuration(durationValue) {
   if (!durationValue) {
@@ -17,6 +18,10 @@ function formatDurationFromMinutes(minutes) {
   const hours = Math.floor(minutes / 60);
   const remainder = minutes % 60;
 
+  if (hours === 0) {
+    return `${remainder}m`;
+  }
+
   if (remainder === 0) {
     return `${hours}h`;
   }
@@ -33,12 +38,115 @@ function getStopSummary(flight) {
 }
 
 function getViaLabel(flight) {
+  if (Array.isArray(flight?.connections) && flight.connections.length > 0) {
+    return `Via ${flight.connections[0]}`;
+  }
+
   if (!flight?.stops || !flight?.itinerary?.length) {
     return "Direct routing";
   }
 
   const firstStop = flight.itinerary[0]?.arrA;
   return firstStop ? `Via ${firstStop}` : "Connecting itinerary";
+}
+
+function getBookingProgramLabel(flight) {
+  const programLabel = flight?.source || flight?.seatAeroSource;
+
+  if (!programLabel) {
+    return flight?.airline || "carrier";
+  }
+
+  return programLabel
+    .split(/[\s_-]+/)
+    .filter(Boolean)
+    .map((segment) => segment.charAt(0).toUpperCase() + segment.slice(1))
+    .join(" ");
+}
+
+function getUniqueDelimitedValues(value) {
+  if (!value || typeof value !== "string") {
+    return [];
+  }
+
+  return [...new Set(
+    value
+      .split(",")
+      .map((segment) => segment.trim())
+      .filter(Boolean),
+  )];
+}
+
+function formatUniqueDelimitedValue(value) {
+  return getUniqueDelimitedValues(value).join(", ");
+}
+
+function normalizeChipValue(value) {
+  if (!value) {
+    return "";
+  }
+
+  return value
+    .toLowerCase()
+    .replace(/\bprogram\b/g, "")
+    .replace(/\bairlines?\b/g, "")
+    .replace(/[^a-z0-9]/g, "");
+}
+
+function shouldShowBookingProgram(flight, airlineLabel, bookingProgramLabel) {
+  if (!bookingProgramLabel) {
+    return false;
+  }
+
+  const normalizedProgramLabel = normalizeChipValue(bookingProgramLabel);
+
+  if (!normalizedProgramLabel) {
+    return false;
+  }
+
+  return !getUniqueDelimitedValues(airlineLabel).some((airlineValue) => {
+    const normalizedAirlineValue = normalizeChipValue(airlineValue);
+
+    return (
+      normalizedAirlineValue === normalizedProgramLabel ||
+      normalizedAirlineValue.includes(normalizedProgramLabel) ||
+      normalizedProgramLabel.includes(normalizedAirlineValue)
+    );
+  });
+}
+
+function buildMetaChips(flight) {
+  const chips = [];
+  const airlineLabel = formatUniqueDelimitedValue(flight?.airline);
+  const bookingProgramLabel =
+    flight?.source || flight?.seatAeroSource ? getBookingProgramLabel(flight) : "";
+  const flightNumberLabel = formatUniqueDelimitedValue(flight?.flightNo);
+  const orderedLabels = [
+    flight?.class,
+    airlineLabel,
+    shouldShowBookingProgram(flight, airlineLabel, bookingProgramLabel)
+      ? `Program: ${bookingProgramLabel}`
+      : "",
+    flightNumberLabel,
+    getStopSummary(flight),
+  ];
+
+  orderedLabels.filter(Boolean).forEach((label) => {
+      const normalizedLabel = normalizeChipValue(label);
+
+      if (
+        normalizedLabel &&
+        chips.some(
+          (existingLabel) => normalizeChipValue(existingLabel) === normalizedLabel,
+        )
+      ) {
+        return;
+      }
+
+      chips.push(label);
+    });
+
+  return chips;
 }
 
 function RouteBlock({
@@ -87,6 +195,81 @@ function SearchDetailPage({
   onGoBack,
   onNavigateScreen,
 }) {
+  const [detailedFlight, setDetailedFlight] = useState(flight);
+  const [isLoadingDetails, setIsLoadingDetails] = useState(false);
+  const [detailError, setDetailError] = useState("");
+
+  useEffect(() => {
+    setDetailedFlight(flight);
+    setDetailError("");
+  }, [flight]);
+
+  useEffect(() => {
+    if (!flight?.seatAeroAvailabilityId || !flight?.seatAeroTripId) {
+      return;
+    }
+
+    let isActive = true;
+
+    async function loadTripDetails() {
+      setIsLoadingDetails(true);
+      setDetailError("");
+
+      try {
+        const response = await apiClient(
+          `/api/search/flights/${flight.seatAeroAvailabilityId}/trips/${flight.seatAeroTripId}`,
+        );
+        const responseJson = await response.json();
+
+        if (!response.ok) {
+          throw new Error(
+            responseJson.message || "Unable to load detailed flight information.",
+          );
+        }
+
+        if (isActive) {
+          setDetailedFlight({
+            ...flight,
+            ...responseJson.data,
+          });
+        }
+      } catch (error) {
+        if (isActive) {
+          setDetailError(
+            error.message || "Unable to load detailed flight information.",
+          );
+        }
+      } finally {
+        if (isActive) {
+          setIsLoadingDetails(false);
+        }
+      }
+    }
+
+    loadTripDetails();
+
+    return () => {
+      isActive = false;
+    };
+  }, [flight]);
+
+  const activeFlight = detailedFlight ?? flight;
+  const metaChips = buildMetaChips(activeFlight);
+  const itinerary =
+    activeFlight?.itinerary?.length > 0
+      ? activeFlight.itinerary
+      : activeFlight
+        ? [
+            {
+              depA: activeFlight.depAirport,
+              dep: activeFlight.dep,
+              arrA: activeFlight.arrAirport,
+              arr: activeFlight.arr,
+              dur: formatDurationFromMinutes(activeFlight.durationMin),
+            },
+          ]
+        : [];
+
   function handleBackClick() {
     if (onGoBack) {
       onGoBack("search-results");
@@ -97,7 +280,7 @@ function SearchDetailPage({
     try {
       const response = await apiClient("/api/bookmarks", {
         method: "POST",
-        body: JSON.stringify(flight),
+        body: JSON.stringify(activeFlight),
       });
 
       if (!response.ok) {
@@ -112,7 +295,7 @@ function SearchDetailPage({
     }
   }
 
-  if (!flight) {
+  if (!activeFlight) {
     return (
       <section className="screen search-detail-screen">
         <div className="search-detail-panel">
@@ -143,28 +326,37 @@ function SearchDetailPage({
         <header className="search-detail-header">
           <p className="search-detail-header__eyebrow">Flight Details</p>
           <h2 className="search-detail-header__title">
-            {flight.depAirport} to {flight.arrAirport}
+            {activeFlight.depAirport} to {activeFlight.arrAirport}
           </h2>
           <p className="search-detail-header__copy">
             Review the itinerary, stop pattern, and mileage cost before booking.
           </p>
+          {isLoadingDetails ? (
+            <p className="search-detail-header__copy">
+              Loading detailed itinerary...
+            </p>
+          ) : null}
+          {!isLoadingDetails && detailError ? (
+            <p className="search-detail-header__copy">{detailError}</p>
+          ) : null}
         </header>
 
         <section className="search-detail-hero">
           <RouteBlock
-            departureTime={flight.dep}
-            departureAirport={flight.depAirport}
-            arrivalTime={flight.arr}
-            arrivalAirport={flight.arrAirport}
-            duration={formatDurationFromMinutes(flight.durationMin)}
-            metaLabel={getViaLabel(flight)}
+            departureTime={activeFlight.dep}
+            departureAirport={activeFlight.depAirport}
+            arrivalTime={activeFlight.arr}
+            arrivalAirport={activeFlight.arrAirport}
+            duration={formatDurationFromMinutes(activeFlight.durationMin)}
+            metaLabel={getViaLabel(activeFlight)}
           />
 
           <div className="search-detail-meta">
-            <span className="history-card__chip">{flight.class}</span>
-            <span className="history-card__chip">{flight.airline}</span>
-            <span className="history-card__chip">{flight.flightNo}</span>
-            <span className="history-card__chip">{getStopSummary(flight)}</span>
+            {metaChips.map((chipLabel) => (
+              <span key={chipLabel} className="history-card__chip">
+                {chipLabel}
+              </span>
+            ))}
           </div>
         </section>
 
@@ -177,7 +369,7 @@ function SearchDetailPage({
           </div>
 
           <div className="search-detail-segments">
-            {flight.itinerary.map((segment, index) => (
+            {itinerary.map((segment, index) => (
               <div key={`${segment.depA}-${segment.arrA}-${index}`}>
                 <article className="search-detail-segment">
                   <div className="search-detail-segment__badge">
@@ -190,8 +382,10 @@ function SearchDetailPage({
                     arrivalTime={segment.arr}
                     arrivalAirport={segment.arrA}
                     duration={formatDuration(segment.dur)}
-                    metaLabel={index === 0 ? "Operating segment" : "Connection"}
-                    footLabel={`${flight.airline} ${flight.flightNo}`}
+                    metaLabel="Flight segment"
+                    footLabel={formatUniqueDelimitedValue(
+                      segment.flightNo || activeFlight.flightNo,
+                    )}
                   />
                 </article>
 
@@ -211,7 +405,7 @@ function SearchDetailPage({
               Total Award Cost
             </span>
             <p className="search-detail-total">
-              {flight.miles.toLocaleString()} Miles
+              {activeFlight.miles.toLocaleString()} Miles
             </p>
           </div>
 
@@ -226,9 +420,20 @@ function SearchDetailPage({
             <button
               type="button"
               className="search-detail-book-button"
-              onClick={() => alert(`Booking via ${flight.airline}`)}
+              onClick={() => {
+                const primaryBookingLink = activeFlight.bookingLinks?.find(
+                  (bookingLink) => bookingLink.primary,
+                );
+
+                if (primaryBookingLink?.link) {
+                  window.open(primaryBookingLink.link, "_blank", "noopener,noreferrer");
+                  return;
+                }
+
+                alert(`Booking via ${getBookingProgramLabel(activeFlight)}`);
+              }}
             >
-              Book via {flight.airline}
+              Book via {getBookingProgramLabel(activeFlight)}
             </button>
           </div>
         </section>
@@ -238,4 +443,3 @@ function SearchDetailPage({
 }
 
 export default SearchDetailPage;
-import ScreenQuickActions from "../components/ScreenQuickActions";
