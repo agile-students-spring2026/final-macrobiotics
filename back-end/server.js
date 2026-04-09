@@ -5,6 +5,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { v4 as uuidv4 } from "uuid";
 import { getSeatsAeroTripDetail, searchSeatsAeroFlights } from "./seatsAero.js";
+import { runPrefetchJob } from "./workers/prefetch.js";
 
 const app = express();
 const port = 3000;
@@ -16,10 +17,13 @@ app.use(cors({ origin: "http://localhost:5173" }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+runPrefetchJob();
+
 app.get("/", (req, res) => {
   res.send("API route reached successfully");
 });
 
+//TODO: Hit cache in Redis before calling API
 app.get("/api/search/flights", async (req, res) => {
   try {
     const flights = await searchSeatsAeroFlights({

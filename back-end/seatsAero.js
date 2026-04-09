@@ -1,7 +1,4 @@
 import "./config/env.js";
-import fs from "node:fs";
-import path from "node:path";
-import { fileURLToPath } from "node:url";
 
 const SEATS_AERO_BASE_URL = "https://seats.aero/partnerapi";
 const SEARCH_RESULT_LIMIT = 250;
@@ -76,7 +73,7 @@ function toBoolean(value) {
   return undefined;
 }
 
-function normalizeAirportCode(value) {
+export function normalizeAirportCode(value) {
   if (!value || typeof value !== "string") {
     return "";
   }
