@@ -81,6 +81,38 @@ export function normalizeAirportCode(value) {
   return value.trim().toUpperCase();
 }
 
+export function validateSearchParams(origin, destination, date) {
+  const normalizedOrigin = normalizeAirportCode(origin);
+  const normalizedDestination = normalizeAirportCode(destination);
+
+  if (!normalizedOrigin || !normalizedDestination || !date) {
+    const validationError = new Error(
+      "origin, destination, and date are required query parameters.",
+    );
+    validationError.statusCode = 400;
+    throw validationError;
+  }
+
+  if (
+    !AIRPORT_LIST_PATTERN.test(normalizedOrigin) ||
+    !AIRPORT_LIST_PATTERN.test(normalizedDestination)
+  ) {
+    const validationError = new Error(
+      "origin and destination must be IATA airport codes such as JFK or LHR.",
+    );
+    validationError.statusCode = 400;
+    throw validationError;
+  }
+
+  if (!DATE_PATTERN.test(date)) {
+    const validationError = new Error("date must use YYYY-MM-DD format.");
+    validationError.statusCode = 400;
+    throw validationError;
+  }
+
+  return { normalizedOrigin, normalizedDestination };
+}
+
 function formatTime(value) {
   if (!value || typeof value !== "string") {
     return "";
@@ -762,33 +794,11 @@ export async function searchSeatsAeroFlights(
     throw configurationError;
   }
 
-  const normalizedOrigin = normalizeAirportCode(origin);
-  const normalizedDestination = normalizeAirportCode(destination);
-
-  if (!normalizedOrigin || !normalizedDestination || !date) {
-    const validationError = new Error(
-      "origin, destination, and date are required query parameters.",
-    );
-    validationError.statusCode = 400;
-    throw validationError;
-  }
-
-  if (
-    !AIRPORT_LIST_PATTERN.test(normalizedOrigin) ||
-    !AIRPORT_LIST_PATTERN.test(normalizedDestination)
-  ) {
-    const validationError = new Error(
-      "origin and destination must be IATA airport codes such as JFK or LHR.",
-    );
-    validationError.statusCode = 400;
-    throw validationError;
-  }
-
-  if (!DATE_PATTERN.test(date)) {
-    const validationError = new Error("date must use YYYY-MM-DD format.");
-    validationError.statusCode = 400;
-    throw validationError;
-  }
+  const { normalizedOrigin, normalizedDestination } = validateSearchParams(
+    origin,
+    destination,
+    date,
+  );
 
   const endpoint = `${SEATS_AERO_BASE_URL}/search?${buildSeatsAeroSearchParams({
     origin: normalizedOrigin,
