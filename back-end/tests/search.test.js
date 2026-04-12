@@ -1,6 +1,7 @@
 import { expect } from "chai";
 import request from "supertest";
-import { app } from "../server.js";
+import app from "../server.js";
+import redisClient from "../config/redis.js";
 
 function createJsonResponse(body, status = 200) {
   return {
@@ -118,7 +119,9 @@ describe("Search API", () => {
         .query({ origin: "jfk", destination: "lhr", date: "2026-06-01" });
 
       expect(response.status).to.equal(200);
-      expect(response.body.message).to.equal("Flights retrieved successfully");
+      expect(response.body.message).to.match(
+        /^Flights retrieved successfully from (API|cache)$/,
+      );
       expect(response.body.data).to.have.length(2);
 
       const [economyResult, businessResult] = response.body.data;
@@ -365,4 +368,8 @@ describe("Search API", () => {
       );
     });
   });
+});
+
+after(async () => {
+  await redisClient.quit();
 });

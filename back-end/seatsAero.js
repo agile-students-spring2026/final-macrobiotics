@@ -1,6 +1,7 @@
-import fs from "node:fs";
-import path from "node:path";
-import { fileURLToPath } from "node:url";
+import "./config/env.js";
+import { fileURLToPath } from "url";
+import fs from "fs";
+import path from "path";
 
 const SEATS_AERO_BASE_URL = "https://seats.aero/partnerapi";
 const SEARCH_RESULT_LIMIT = 250;
@@ -13,52 +14,6 @@ const CABIN_OPTIONS = [
   { code: "J", key: "business", label: "Business" },
   { code: "F", key: "first", label: "First" },
 ];
-
-loadRootEnvFile();
-
-function loadRootEnvFile() {
-  if (process.env.SEATS_AERO_API) {
-    return;
-  }
-
-  const currentFile = fileURLToPath(import.meta.url);
-  const currentDir = path.dirname(currentFile);
-  const rootEnvPath = path.resolve(currentDir, "..", ".env");
-
-  if (!fs.existsSync(rootEnvPath)) {
-    return;
-  }
-
-  const envFileContents = fs.readFileSync(rootEnvPath, "utf8");
-
-  envFileContents.split(/\r?\n/u).forEach((line) => {
-    const trimmedLine = line.trim();
-
-    if (!trimmedLine || trimmedLine.startsWith("#")) {
-      return;
-    }
-
-    const separatorIndex = trimmedLine.indexOf("=");
-
-    if (separatorIndex === -1) {
-      return;
-    }
-
-    const key = trimmedLine.slice(0, separatorIndex).trim();
-    let value = trimmedLine.slice(separatorIndex + 1).trim();
-
-    if (
-      (value.startsWith('"') && value.endsWith('"')) ||
-      (value.startsWith("'") && value.endsWith("'"))
-    ) {
-      value = value.slice(1, -1);
-    }
-
-    if (!(key in process.env)) {
-      process.env[key] = value;
-    }
-  });
-}
 
 function readPath(source, pathString) {
   return pathString.split(".").reduce((currentValue, segment) => {
@@ -121,7 +76,7 @@ function toBoolean(value) {
   return undefined;
 }
 
-function normalizeAirportCode(value) {
+export function normalizeAirportCode(value) {
   if (!value || typeof value !== "string") {
     return "";
   }
@@ -129,12 +84,45 @@ function normalizeAirportCode(value) {
   return value.trim().toUpperCase();
 }
 
+export function validateSearchParams(origin, destination, date) {
+  const normalizedOrigin = normalizeAirportCode(origin);
+  const normalizedDestination = normalizeAirportCode(destination);
+
+  if (!normalizedOrigin || !normalizedDestination || !date) {
+    const validationError = new Error(
+      "origin, destination, and date are required query parameters.",
+    );
+    validationError.statusCode = 400;
+    throw validationError;
+  }
+
+  if (
+    !AIRPORT_LIST_PATTERN.test(normalizedOrigin) ||
+    !AIRPORT_LIST_PATTERN.test(normalizedDestination)
+  ) {
+    const validationError = new Error(
+      "origin and destination must be IATA airport codes such as JFK or LHR.",
+    );
+    validationError.statusCode = 400;
+    throw validationError;
+  }
+
+  if (!DATE_PATTERN.test(date)) {
+    const validationError = new Error("date must use YYYY-MM-DD format.");
+    validationError.statusCode = 400;
+    throw validationError;
+  }
+
+  return { normalizedOrigin, normalizedDestination };
+}
+
 function formatTime(value) {
   if (!value || typeof value !== "string") {
     return "";
   }
 
-  const timeMatch = value.match(/(?:T|\s)(\d{2}:\d{2})/u) ?? value.match(/^(\d{2}:\d{2})/u);
+  const timeMatch =
+    value.match(/(?:T|\s)(\d{2}:\d{2})/u) ?? value.match(/^(\d{2}:\d{2})/u);
   return timeMatch ? timeMatch[1] : value;
 }
 
@@ -204,7 +192,10 @@ function titleCase(value) {
 
 function normalizeDelimitedList(value) {
   if (Array.isArray(value)) {
-    return value.filter(Boolean).map((item) => String(item).trim()).filter(Boolean);
+    return value
+      .filter(Boolean)
+      .map((item) => String(item).trim())
+      .filter(Boolean);
   }
 
   if (typeof value !== "string") {
@@ -288,7 +279,12 @@ function normalizeCabinOptions(availability) {
 
   const genericTrips = asArray(getFirstValue(availability, ["Trips", "trips"]));
   const genericMileage = toNumber(
-    getFirstValue(availability, ["MileageCost", "mileageCost", "Miles", "miles"]),
+    getFirstValue(availability, [
+      "MileageCost",
+      "mileageCost",
+      "Miles",
+      "miles",
+    ]),
   );
   const genericCabin = normalizeCabinLabel(
     getFirstValue(availability, ["Cabin", "cabin", "class", "travelClass"]) ??
@@ -427,7 +423,9 @@ function normalizeTrip(trip, fallbackValues = {}) {
 
   let itinerary = rawSegments
     .map((segment) => normalizeSegment(segment))
-    .filter((segment) => segment.depA || segment.arrA || segment.dep || segment.arr);
+    .filter(
+      (segment) => segment.depA || segment.arrA || segment.dep || segment.arr,
+    );
 
   for (let index = 0; index < itinerary.length - 1; index += 1) {
     const currentSegment = itinerary[index];
@@ -532,7 +530,9 @@ function normalizeTrip(trip, fallbackValues = {}) {
         depA:
           fallbackValues.depAirport ??
           fallbackValues.originAirport ??
-          normalizeAirportCode(getFirstValue(trip, ["OriginAirport", "originAirport"])),
+          normalizeAirportCode(
+            getFirstValue(trip, ["OriginAirport", "originAirport"]),
+          ),
         dep: formatTime(departureTimestamp),
         arrA:
           fallbackValues.arrAirport ??
@@ -548,7 +548,10 @@ function normalizeTrip(trip, fallbackValues = {}) {
 
   return {
     depAirport:
-      firstSegment?.depA ?? fallbackValues.depAirport ?? fallbackValues.originAirport ?? "",
+      firstSegment?.depA ??
+      fallbackValues.depAirport ??
+      fallbackValues.originAirport ??
+      "",
     arrAirport:
       lastSegment?.arrA ??
       fallbackValues.arrAirport ??
@@ -558,8 +561,9 @@ function normalizeTrip(trip, fallbackValues = {}) {
     arr: lastSegment?.arr ?? formatTime(arrivalTimestamp),
     durationMin: durationMinutes ?? fallbackValues.durationMin ?? 0,
     stops:
-      toNumber(getFirstValue(trip, ["Stops", "stops", "StopCount", "stopCount"])) ??
-      Math.max(itinerary.length - 1, 0),
+      toNumber(
+        getFirstValue(trip, ["Stops", "stops", "StopCount", "stopCount"]),
+      ) ?? Math.max(itinerary.length - 1, 0),
     flightNo: flightNumbers || fallbackValues.flightNo || "",
     airline:
       tripCarriers ??
@@ -568,15 +572,24 @@ function normalizeTrip(trip, fallbackValues = {}) {
       fallbackValues.airline ??
       "",
     miles:
-      toNumber(getFirstValue(trip, ["MileageCost", "mileageCost", "Miles", "miles"])) ??
-      fallbackValues.miles,
+      toNumber(
+        getFirstValue(trip, ["MileageCost", "mileageCost", "Miles", "miles"]),
+      ) ?? fallbackValues.miles,
     class:
       normalizeCabinLabel(
         getFirstValue(trip, ["Cabin", "cabin", "class", "travelClass"]) ??
           fallbackValues.class,
       ) || fallbackValues.class,
     connections,
-    itinerary: itinerary.map(({ departureTimestamp, arrivalTimestamp, durationMinutes: _minutes, airline: _airline, ...segment }) => segment),
+    itinerary: itinerary.map(
+      ({
+        departureTimestamp,
+        arrivalTimestamp,
+        durationMinutes: _minutes,
+        airline: _airline,
+        ...segment
+      }) => segment,
+    ),
     travelDate:
       formatDate(
         getFirstValue(trip, ["Date", "date", "DepartsAt", "departsAt"]) ??
@@ -628,7 +641,12 @@ function normalizeAvailability(availability) {
 
   const source = getFirstValue(availability, ["Source", "source"]) ?? "";
   const travelDate = formatDate(
-    getFirstValue(availability, ["Date", "date", "DepartureDate", "departureDate"]),
+    getFirstValue(availability, [
+      "Date",
+      "date",
+      "DepartureDate",
+      "departureDate",
+    ]),
   );
   const cabinOptions = normalizeCabinOptions(availability);
 
@@ -648,7 +666,8 @@ function normalizeAvailability(availability) {
       .map((trip, tripIndex) => {
         const normalizedTrip = normalizeTrip(trip, fallbackTripValues);
         const tripId = String(
-          getFirstValue(trip, ["ID", "id"]) ?? `${availabilityId}:trip:${tripIndex}`,
+          getFirstValue(trip, ["ID", "id"]) ??
+            `${availabilityId}:trip:${tripIndex}`,
         );
 
         return {
@@ -657,7 +676,9 @@ function normalizeAvailability(availability) {
           seatAeroTripId: tripId,
           seatAeroSource: normalizedTrip.source || source,
           airline:
-            normalizedTrip.airline || titleCase(normalizedTrip.source) || "Seats.aero",
+            normalizedTrip.airline ||
+            titleCase(normalizedTrip.source) ||
+            "Seats.aero",
           flightNo:
             normalizedTrip.flightNo ||
             normalizedTrip.airline ||
@@ -719,17 +740,17 @@ function normalizeAvailability(availability) {
       arrAirport: trip.arrAirport || destinationAirport,
       dep: trip.dep,
       arr: trip.arr,
-        durationMin: trip.durationMin,
-        stops: trip.stops,
-        miles: trip.miles ?? cabinOption.mileage,
-        airlineCode: getPrimaryAirlineCode(trip.airline),
-        logoUrl: "",
-        class: trip.class || cabinOption.label,
-        itinerary: trip.itinerary,
-        travelDate: trip.travelDate || travelDate,
-        source: trip.source || source,
-        connections: trip.connections,
-      }));
+      durationMin: trip.durationMin,
+      stops: trip.stops,
+      miles: trip.miles ?? cabinOption.mileage,
+      airlineCode: getPrimaryAirlineCode(trip.airline),
+      logoUrl: "",
+      class: trip.class || cabinOption.label,
+      itinerary: trip.itinerary,
+      travelDate: trip.travelDate || travelDate,
+      source: trip.source || source,
+      connections: trip.connections,
+    }));
   });
 }
 
@@ -776,35 +797,11 @@ export async function searchSeatsAeroFlights(
     throw configurationError;
   }
 
-  const normalizedOrigin = normalizeAirportCode(origin);
-  const normalizedDestination = normalizeAirportCode(destination);
-
-  if (!normalizedOrigin || !normalizedDestination || !date) {
-    const validationError = new Error(
-      "origin, destination, and date are required query parameters.",
-    );
-    validationError.statusCode = 400;
-    throw validationError;
-  }
-
-  if (
-    !AIRPORT_LIST_PATTERN.test(normalizedOrigin) ||
-    !AIRPORT_LIST_PATTERN.test(normalizedDestination)
-  ) {
-    const validationError = new Error(
-      "origin and destination must be IATA airport codes such as JFK or LHR.",
-    );
-    validationError.statusCode = 400;
-    throw validationError;
-  }
-
-  if (!DATE_PATTERN.test(date)) {
-    const validationError = new Error(
-      "date must use YYYY-MM-DD format.",
-    );
-    validationError.statusCode = 400;
-    throw validationError;
-  }
+  const { normalizedOrigin, normalizedDestination } = validateSearchParams(
+    origin,
+    destination,
+    date,
+  );
 
   const endpoint = `${SEATS_AERO_BASE_URL}/search?${buildSeatsAeroSearchParams({
     origin: normalizedOrigin,
@@ -824,15 +821,29 @@ export async function searchSeatsAeroFlights(
 
   try {
     responseBody = await response.json();
-  } catch {
+
+    // // Log out raw response body for unit test mocking
+    // const __filename = fileURLToPath(import.meta.url);
+    // const __dirname = path.dirname(__filename);
+    // const filePath = path.join(__dirname, "./tests/data/prefetch.data.js");
+    // fs.mkdirSync(path.dirname(filePath), { recursive: true });
+
+    // const wstream = fs.createWriteStream(filePath);
+    // wstream.write(
+    //   `export const mockApiResponse = ${JSON.stringify(responseBody, null, 2)};`,
+    // );
+    // wstream.end();
+  } catch (error) {
     responseBody = null;
+    console.error(error);
   }
 
   if (!response.ok) {
     const upstreamError = new Error(
       responseBody?.message ?? "Seats.aero search request failed.",
     );
-    upstreamError.statusCode = response.status >= 400 && response.status < 500 ? 400 : 502;
+    upstreamError.statusCode =
+      response.status >= 400 && response.status < 500 ? 400 : 502;
     throw upstreamError;
   }
 
@@ -889,22 +900,32 @@ export async function getSeatsAeroTripDetail(
     throw upstreamError;
   }
 
-  const trip = asArray(getFirstValue(responseBody, ["data", "results", "items"])).find(
-    (candidateTrip) => String(getFirstValue(candidateTrip, ["ID", "id"])) === String(tripId),
+  const trip = asArray(
+    getFirstValue(responseBody, ["data", "results", "items"]),
+  ).find(
+    (candidateTrip) =>
+      String(getFirstValue(candidateTrip, ["ID", "id"])) === String(tripId),
   );
 
   if (!trip) {
-    const notFoundError = new Error("Trip details were not found for the selected result.");
+    const notFoundError = new Error(
+      "Trip details were not found for the selected result.",
+    );
     notFoundError.statusCode = 404;
     throw notFoundError;
   }
 
   const carriers = getFirstValue(responseBody, ["carriers"]) ?? {};
-  const bookingLinks = asArray(getFirstValue(responseBody, ["booking_links", "bookingLinks"]));
+  const bookingLinks = asArray(
+    getFirstValue(responseBody, ["booking_links", "bookingLinks"]),
+  );
 
   const normalizedTrip = normalizeTrip(trip, {
     originAirport: getFirstValue(trip, ["OriginAirport", "originAirport"]),
-    destinationAirport: getFirstValue(trip, ["DestinationAirport", "destinationAirport"]),
+    destinationAirport: getFirstValue(trip, [
+      "DestinationAirport",
+      "destinationAirport",
+    ]),
     travelDate: getFirstValue(trip, ["Date", "date", "DepartsAt", "departsAt"]),
     source: getFirstValue(trip, ["Source", "source"]),
     airline: getFirstValue(trip, ["Carriers", "carriers"]),

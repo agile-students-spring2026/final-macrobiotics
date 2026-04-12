@@ -1,9 +1,13 @@
+import "./config/env.js";
 import express from "express";
 import cors from "cors";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { v4 as uuidv4 } from "uuid";
 import { getSeatsAeroTripDetail, searchSeatsAeroFlights } from "./seatsAero.js";
+import redisClient from "./config/redis.js";
+import { startPrefetchJob } from "./workers/prefetch.js";
+import { validateSearchParams } from "./seatsAero.js";
 
 const app = express();
 const port = 3000;
@@ -21,14 +25,30 @@ app.get("/", (req, res) => {
 
 app.get("/api/search/flights", async (req, res) => {
   try {
+    const { origin, destination, date } = req.query;
+    const { normalizedOrigin, normalizedDestination } = validateSearchParams(
+      origin,
+      destination,
+      date,
+    );
+    const cacheKey = `search:${normalizedOrigin}:${normalizedDestination}:${date}`;
+
+    const cachedData = await redisClient.get(cacheKey);
+    if (cachedData) {
+      return res.status(200).json({
+        message: "Flights retrieved successfully from cache",
+        data: JSON.parse(cachedData),
+      });
+    }
+
     const flights = await searchSeatsAeroFlights({
-      origin: req.query.origin,
-      destination: req.query.destination,
-      date: req.query.date,
+      origin: normalizedOrigin,
+      destination: normalizedDestination,
+      date: date,
     });
 
     res.status(200).json({
-      message: "Flights retrieved successfully",
+      message: "Flights retrieved successfully from API",
       data: flights,
     });
   } catch (error) {
@@ -118,11 +138,6 @@ app.put("/api/settings/preferences", (req, res) => {
 
 let bookmarks = [];
 
-// Export bookmarks for testing
-export { bookmarks };
-export { app };
-export default app;
-
 //TODO: Add authenticated route param for users
 app.get("/api/bookmarks", (req, res) => {
   res
@@ -165,12 +180,6 @@ app.delete("/api/bookmarks/:id", (req, res) => {
   }
 });
 
-if (process.env.NODE_ENV !== "test" && isDirectExecution) {
-  app.listen(port, () => {
-    console.log(`Server running at http://localhost:${port}`);
-  });
-}
-
 app.get("/", (req, res) => {
   res.send("Route retrieved successfully");
 });
@@ -210,3 +219,33 @@ app.post("/api/signup", (req, res) => {
     },
   });
 });
+
+const startServer = async () => {
+  try {
+    await redisClient.connect();
+
+    if (process.env.NODE_ENV !== "test" && isDirectExecution) {
+      app.listen(port, () => {
+        console.log(`Server running at http://localhost:${port}`);
+        console.log(
+          "Connected to Redis at",
+          process.env.REDIS_URL.split("@")[1],
+        );
+
+        startPrefetchJob();
+      });
+    }
+  } catch (error) {
+    console.error(
+      "Failed to start server due to Redis connection error:",
+      error,
+    );
+    process.exit(1);
+  }
+};
+
+startServer();
+
+export { app };
+export { bookmarks };
+export default app;
