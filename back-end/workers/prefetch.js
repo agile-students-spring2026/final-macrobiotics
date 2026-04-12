@@ -42,66 +42,71 @@ const buildSearchUrl = ({ origin, destination, startDate, endDate }) => {
   return SEATS_AERO_BASE_URL + queryParams.toString();
 };
 
-export const runPrefetchJob = async () => {
-  cron.schedule("*/20 * * * *", async () => {
-    const jobStartTime = Date.now();
-    console.log(new Date().toISOString(), "Running prefetch job...");
+const runPrefetchJob = async () => {
+  const jobStartTime = Date.now();
+  console.log(new Date().toISOString(), "Running prefetch job...");
 
-    try {
-      const apiKey = process.env.SEATS_AERO_API?.trim();
-      if (!apiKey) {
-        throw new Error("API key not found.");
-      }
-
-      let { origins, destinations } = await getTargetAirports();
-      origins = origins.join(",");
-      destinations = destinations.join(",");
-
-      const startDate = getFormattedDate(0);
-      const endDate = getFormattedDate(30);
-
-      const requestUrl = buildSearchUrl({
-        origin: origins,
-        destination: destinations,
-        startDate,
-        endDate,
-      });
-
-      const response = await fetch(requestUrl, {
-        method: "GET",
-        headers: {
-          Accept: "application/json",
-          "Partner-Authorization": apiKey,
-        },
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(`API request failed: ${data.message}`);
-      }
-
-      const flights = normalizeSeatsAeroResults(data);
-      const flightsByKey = {};
-
-      for (const flight of flights) {
-        const cacheKey = `search:${flight.depAirport}:${flight.arrAirport}:${flight.travelDate}`;
-        if (!flightsByKey[cacheKey]) {
-          flightsByKey[cacheKey] = [];
-        }
-        flightsByKey[cacheKey].push(flight);
-      }
-
-      for (const [key, flightsArray] of Object.entries(flightsByKey)) {
-        await redisClient.setEx(key, 1200, JSON.stringify(flightsArray));
-      }
-
-      const duration = Date.now() - jobStartTime;
-      const routeCount = Object.keys(flightsByKey).length;
-
-      console.log(`Cached ${routeCount} unique routes in ${duration}ms.`);
-    } catch (error) {
-      console.log("Job failed with", error);
+  try {
+    const apiKey = process.env.SEATS_AERO_API?.trim();
+    if (!apiKey) {
+      throw new Error("API key not found.");
     }
-  });
+
+    let { origins, destinations } = await getTargetAirports();
+    origins = origins.join(",");
+    destinations = destinations.join(",");
+
+    const startDate = getFormattedDate(0);
+    const endDate = getFormattedDate(30);
+
+    const requestUrl = buildSearchUrl({
+      origin: origins,
+      destination: destinations,
+      startDate,
+      endDate,
+    });
+
+    const response = await fetch(requestUrl, {
+      method: "GET",
+      headers: {
+        Accept: "application/json",
+        "Partner-Authorization": apiKey,
+      },
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(`API request failed: ${data.message}`);
+    }
+
+    const flights = normalizeSeatsAeroResults(data);
+    const flightsByKey = {};
+
+    for (const flight of flights) {
+      const cacheKey = `search:${flight.depAirport}:${flight.arrAirport}:${flight.travelDate}`;
+      if (!flightsByKey[cacheKey]) {
+        flightsByKey[cacheKey] = [];
+      }
+      flightsByKey[cacheKey].push(flight);
+    }
+
+    for (const [key, flightsArray] of Object.entries(flightsByKey)) {
+      await redisClient.setEx(key, 1200, JSON.stringify(flightsArray));
+    }
+
+    const duration = Date.now() - jobStartTime;
+    const routeCount = Object.keys(flightsByKey).length;
+
+    console.log(`Cached ${routeCount} unique routes in ${duration}ms.`);
+  } catch (error) {
+    console.log("Job failed with", error);
+  }
+};
+
+export const startPrefetchJob = async () => {
+  //Run immediately on server start
+  runPrefetchJob();
+
+  cron.schedule("*/20 * * * *", runPrefetchJob);
 };

@@ -5,7 +5,8 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { v4 as uuidv4 } from "uuid";
 import { getSeatsAeroTripDetail, searchSeatsAeroFlights } from "./seatsAero.js";
-import { runPrefetchJob } from "./workers/prefetch.js";
+import redisClient from "./config/redis.js";
+import { startPrefetchJob } from "./workers/prefetch.js";
 
 const app = express();
 const port = 3000;
@@ -17,23 +18,35 @@ app.use(cors({ origin: "http://localhost:5173" }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-runPrefetchJob();
+startPrefetchJob();
 
 app.get("/", (req, res) => {
   res.send("API route reached successfully");
 });
 
-//TODO: Hit cache in Redis before calling API
 app.get("/api/search/flights", async (req, res) => {
   try {
+    const { origin, destination, date } = req.query;
+    const normalizedOrigin = origin.trim().toUpperCase();
+    const normalizedDestination = destination.trim().toUpperCase();
+    const cacheKey = `search:${normalizedOrigin}:${normalizedDestination}:${date}`;
+
+    const cachedData = await redisClient.get(cacheKey);
+    if (cachedData) {
+      return res.status(200).json({
+        message: "Flights retrieved successfully from cache",
+        data: JSON.parse(cachedData),
+      });
+    }
+
     const flights = await searchSeatsAeroFlights({
-      origin: req.query.origin,
-      destination: req.query.destination,
-      date: req.query.date,
+      origin: normalizedOrigin,
+      destination: normalizedDestination,
+      date: date,
     });
 
     res.status(200).json({
-      message: "Flights retrieved successfully",
+      message: "Flights retrieved successfully from API",
       data: flights,
     });
   } catch (error) {
