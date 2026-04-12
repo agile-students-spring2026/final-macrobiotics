@@ -112,7 +112,7 @@ export const runPrefetchJob = async () => {
 };
 
 export const startPrefetchJob = async () => {
-  if (process.argv.includes("--prefetch") && process.env.NODE_ENV !== "test") {
+  if (process.argv.includes("--prefetch")) {
     log("flag --prefetch: Populating cache...");
     runPrefetchJob();
     cron.schedule("*/20 * * * *", runPrefetchJob);
