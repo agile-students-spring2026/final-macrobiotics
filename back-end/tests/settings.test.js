@@ -26,7 +26,10 @@ describe("Settings API", () => {
     it("should return 200 when both fields are provided", async () => {
       const res = await request(app)
         .put("/api/settings/email")
-        .send({ previousEmail: "old@example.com", newEmail: "new@example.com" });
+        .send({
+          previousEmail: "old@example.com",
+          newEmail: "new@example.com",
+        });
       expect(res.status).to.equal(200);
       expect(res.body).to.have.property("message");
     });
@@ -106,9 +109,7 @@ describe("Settings API", () => {
     });
 
     it("should return 400 when body is an empty array", async () => {
-      const res = await request(app)
-        .put("/api/settings/preferences")
-        .send([]);
+      const res = await request(app).put("/api/settings/preferences").send([]);
       expect(res.status).to.equal(400);
     });
   });

@@ -226,7 +226,7 @@ const startServer = async () => {
 
     if (process.env.NODE_ENV !== "test" && isDirectExecution) {
       app.listen(port, () => {
-        console.log(`Server running at http://localhost:${PORT}`);
+        console.log(`Server running at http://localhost:${port}`);
         console.log(
           "Connected to Redis at",
           process.env.REDIS_URL.split("@")[1],

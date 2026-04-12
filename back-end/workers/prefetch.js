@@ -4,6 +4,13 @@ import { normalizeSeatsAeroResults } from "../seatsAero.js";
 //TODO: Import mongoose model for search history
 
 const SEATS_AERO_BASE_URL = "https://seats.aero/partnerapi/search?";
+const isTestRun =
+  process.env.NODE_ENV === "test" || process.env.npm_lifecycle_event === "test";
+const log = (...args) => {
+  if (!isTestRun) {
+    console.log(...args);
+  }
+};
 
 const getFormattedDate = (daysToAdd) => {
   const date = new Date();
@@ -27,7 +34,7 @@ const getTargetAirports = async () => {
   return { origins: originsToCache, destinations: destinationsToCache };
 };
 
-const buildSearchUrl = ({ origin, destination, startDate, endDate }) => {
+export const buildSearchUrl = ({ origin, destination, startDate, endDate }) => {
   const queryParams = new URLSearchParams({
     origin_airport: origin,
     destination_airport: destination,
@@ -42,9 +49,9 @@ const buildSearchUrl = ({ origin, destination, startDate, endDate }) => {
   return SEATS_AERO_BASE_URL + queryParams.toString();
 };
 
-const runPrefetchJob = async () => {
+export const runPrefetchJob = async () => {
   const jobStartTime = Date.now();
-  console.log(new Date().toISOString(), "Running prefetch job...");
+  log(new Date().toISOString(), "Running prefetch job...");
 
   try {
     const apiKey = process.env.SEATS_AERO_API?.trim();
@@ -98,15 +105,15 @@ const runPrefetchJob = async () => {
     const duration = Date.now() - jobStartTime;
     const routeCount = Object.keys(flightsByKey).length;
 
-    console.log(`Cached ${routeCount} unique routes in ${duration}ms.`);
+    log(`Cached ${routeCount} unique routes in ${duration}ms.`);
   } catch (error) {
-    console.log("Job failed with", error);
+    log("Job failed with", error);
   }
 };
 
 export const startPrefetchJob = async () => {
-  if (process.argv.includes("--prefetch")) {
-    console.log("flag --prefetch: Populating cache...");
+  if (process.argv.includes("--prefetch") && process.env.NODE_ENV !== "test") {
+    log("flag --prefetch: Populating cache...");
     runPrefetchJob();
     cron.schedule("*/20 * * * *", runPrefetchJob);
   }

@@ -1,4 +1,7 @@
 import "./config/env.js";
+import { fileURLToPath } from "url";
+import fs from "fs";
+import path from "path";
 
 const SEATS_AERO_BASE_URL = "https://seats.aero/partnerapi";
 const SEARCH_RESULT_LIMIT = 250;
@@ -818,8 +821,21 @@ export async function searchSeatsAeroFlights(
 
   try {
     responseBody = await response.json();
-  } catch {
+
+    // // Log out raw response body for unit test mocking
+    // const __filename = fileURLToPath(import.meta.url);
+    // const __dirname = path.dirname(__filename);
+    // const filePath = path.join(__dirname, "./tests/data/prefetch.data.js");
+    // fs.mkdirSync(path.dirname(filePath), { recursive: true });
+
+    // const wstream = fs.createWriteStream(filePath);
+    // wstream.write(
+    //   `export const mockApiResponse = ${JSON.stringify(responseBody, null, 2)};`,
+    // );
+    // wstream.end();
+  } catch (error) {
     responseBody = null;
+    console.error(error);
   }
 
   if (!response.ok) {
