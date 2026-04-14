@@ -921,11 +921,12 @@ export async function getSeatsAeroTripDetail(
   );
 
   const normalizedTrip = normalizeTrip(trip, {
-    originAirport: getFirstValue(trip, ["OriginAirport", "originAirport"]),
-    destinationAirport: getFirstValue(trip, [
-      "DestinationAirport",
-      "destinationAirport",
-    ]),
+    originAirport: normalizeAirportCode(
+      getFirstValue(trip, ["OriginAirport", "originAirport"]),
+    ),
+    destinationAirport: normalizeAirportCode(
+      getFirstValue(trip, ["DestinationAirport", "destinationAirport"]),
+    ),
     travelDate: getFirstValue(trip, ["Date", "date", "DepartsAt", "departsAt"]),
     source: getFirstValue(trip, ["Source", "source"]),
     airline: getFirstValue(trip, ["Carriers", "carriers"]),
