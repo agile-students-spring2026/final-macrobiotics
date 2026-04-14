@@ -5,9 +5,10 @@ import dotenv from "dotenv";
 
 const currentFile = fileURLToPath(import.meta.url);
 const backendDir = path.dirname(currentFile);
-const projectRoot = path.resolve(backendDir, "..");
+const projectRoot = path.resolve(backendDir, "..", "..");
 const envPaths = [
   path.resolve(backendDir, ".env"),
+  path.resolve(projectRoot, "back-end", ".env"),
   path.resolve(projectRoot, ".env"),
 ];
 
