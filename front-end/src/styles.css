@@ -33,64 +33,8 @@ body {
 .app-shell {
   width: min(1100px, 100%);
   margin: 0 auto;
+  min-height: 100vh;
   padding: 1rem;
-  display: grid;
-  gap: 1rem;
-}
-
-.app-header {
-  border-radius: 1rem;
-  padding: 1rem 1.25rem;
-  background: var(--bg-soft);
-  color: #f6f8fb;
-  border: 1px solid #2b364a;
-}
-
-.app-title {
-  margin: 0;
-  font-family: "Sora", "Outfit", sans-serif;
-  font-size: clamp(1.3rem, 4vw, 1.8rem);
-}
-
-.app-subtitle {
-  margin: 0.4rem 0 0;
-  color: #d0d8e5;
-}
-
-.screen-nav {
-  display: flex;
-  overflow-x: auto;
-  gap: 0.6rem;
-  padding-bottom: 0.2rem;
-}
-
-.screen-nav__button {
-  border: 1px solid #30415d;
-  background: #1a2539;
-  color: #f3f6fb;
-  border-radius: 999px;
-  padding: 0.45rem 0.9rem;
-  font: inherit;
-  font-size: 0.92rem;
-  white-space: nowrap;
-  cursor: pointer;
-}
-
-.screen-nav__button:hover {
-  background: #22314b;
-}
-
-.screen-nav__button.is-active {
-  border-color: #5ea5de;
-  background: #2f4d6b;
-}
-
-.screen-canvas {
-  background: var(--panel);
-  border-radius: 1rem;
-  border: 1px solid var(--panel-line);
-  min-height: 62vh;
-  padding: 1.2rem;
 }
 
 .screen h2 {
@@ -1773,37 +1717,6 @@ body {
 
 @media (min-width: 860px) {
   .app-shell {
-    grid-template-columns: 260px 1fr;
-    grid-template-areas:
-      "header header"
-      "nav canvas";
-    align-items: start;
-    padding: 1.5rem;
-  }
-
-  .app-header {
-    grid-area: header;
-  }
-
-  .screen-nav {
-    grid-area: nav;
-    flex-direction: column;
-    overflow: visible;
-    position: sticky;
-    top: 1.5rem;
-    background: var(--bg-soft);
-    border: 1px solid #2b364a;
-    border-radius: 1rem;
-    padding: 1rem;
-  }
-
-  .screen-nav__button {
-    text-align: left;
-  }
-
-  .screen-canvas {
-    grid-area: canvas;
-    min-height: 70vh;
     padding: 1.5rem;
   }
 

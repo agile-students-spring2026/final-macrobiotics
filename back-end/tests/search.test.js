@@ -371,5 +371,7 @@ describe("Search API", () => {
 });
 
 after(async () => {
-  await redisClient.quit();
+  if (redisClient?.isOpen) {
+    await redisClient.quit();
+  }
 });

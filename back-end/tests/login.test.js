@@ -1,44 +1,80 @@
 import { expect } from "chai";
 import request from "supertest";
 import { app } from "../server.js";
+import { resetAuthState, signupAndGetToken } from "./authTestUtils.js";
 
 describe("Login API", () => {
+  beforeEach(async () => {
+    await resetAuthState();
+  });
+
   describe("POST /api/login", () => {
-    it("should ret 200 given email and password", async () => {
+    it("returns 200 with a JWT when valid credentials are provided", async () => {
+      await signupAndGetToken({
+        email: "test@example.com",
+        password: "secret123",
+      });
+
       const res = await request(app)
         .post("/api/login")
-        .send({ email: "test@example.com", password: "12345" });
+        .send({ email: "test@example.com", password: "secret123" });
 
       expect(res.status).to.equal(200);
       expect(res.body).to.have.property("message", "Login successful.");
       expect(res.body).to.have.property("data");
       expect(res.body.data).to.have.property("email", "test@example.com");
+      expect(res.body.data).to.have.property("token").that.is.a("string");
+      expect(res.body.data.token.length).to.be.greaterThan(20);
     });
 
-    it("should ret 400 given email is absent", async () => {
+    it("returns 400 when email is missing", async () => {
       const res = await request(app)
         .post("/api/login")
-        .send({ password: "12345" });
+        .send({ password: "secret123" });
 
       expect(res.status).to.equal(400);
-      expect(res.body).to.have.property("message");
+      expect(res.body).to.have.property(
+        "message",
+        "Email and password are required.",
+      );
     });
 
-    it("should ret 400 given password is absent", async () => {
+    it("returns 400 when password is missing", async () => {
       const res = await request(app)
         .post("/api/login")
         .send({ email: "test@example.com" });
 
       expect(res.status).to.equal(400);
-      expect(res.body).to.have.property("message");
+      expect(res.body).to.have.property(
+        "message",
+        "Email and password are required.",
+      );
+    });
+
+    it("returns 401 when the password is incorrect", async () => {
+      await signupAndGetToken({
+        email: "test@example.com",
+        password: "secret123",
+      });
+
+      const res = await request(app)
+        .post("/api/login")
+        .send({ email: "test@example.com", password: "wrongpass" });
+
+      expect(res.status).to.equal(401);
+      expect(res.body).to.have.property(
+        "message",
+        "Invalid email or password.",
+      );
     });
   });
 
   describe("POST /api/signup", () => {
-    it("should ret 201 given email and password", async () => {
-      const res = await request(app)
-        .post("/api/signup")
-        .send({ email: "testnewuser@example.com", password: "abcdefg" });
+    it("returns 201 with a JWT when a new account is created", async () => {
+      const res = await request(app).post("/api/signup").send({
+        email: "testnewuser@example.com",
+        password: "abcdefg",
+      });
 
       expect(res.status).to.equal(201);
       expect(res.body).to.have.property(
@@ -50,24 +86,49 @@ describe("Login API", () => {
         "email",
         "testnewuser@example.com",
       );
+      expect(res.body.data).to.have.property("token").that.is.a("string");
     });
 
-    it("should ret 400 given email is absent", async () => {
+    it("returns 400 when email is missing", async () => {
       const res = await request(app)
         .post("/api/signup")
         .send({ password: "abcdefg" });
 
       expect(res.status).to.equal(400);
-      expect(res.body).to.have.property("message");
+      expect(res.body).to.have.property(
+        "message",
+        "Email and password are required.",
+      );
     });
 
-    it("should ret 400 given password is absent", async () => {
+    it("returns 400 when password is missing", async () => {
       const res = await request(app)
         .post("/api/signup")
         .send({ email: "testnewuser@example.com" });
 
       expect(res.status).to.equal(400);
-      expect(res.body).to.have.property("message");
+      expect(res.body).to.have.property(
+        "message",
+        "Email and password are required.",
+      );
+    });
+
+    it("returns 409 when the email already exists", async () => {
+      await signupAndGetToken({
+        email: "duplicate@example.com",
+        password: "secret123",
+      });
+
+      const res = await request(app).post("/api/signup").send({
+        email: "duplicate@example.com",
+        password: "secret123",
+      });
+
+      expect(res.status).to.equal(409);
+      expect(res.body).to.have.property(
+        "message",
+        "An account with that email already exists.",
+      );
     });
   });
 });

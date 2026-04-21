@@ -25,7 +25,7 @@ const TRAVELER_OPTIONS = [
   { value: "8", label: "8" },
 ];
 
-function IntroPage({ onNavigateScreen, onStartSearch }) {
+function IntroPage({ isAuthenticated, onNavigateScreen, onStartSearch }) {
   const [accountMode, setAccountMode] = useState("signup");
   const [isAdvancedOpen, setIsAdvancedOpen] = useState(false);
   const [recentSearches, setRecentSearches] = useState([]);
@@ -116,18 +116,28 @@ function IntroPage({ onNavigateScreen, onStartSearch }) {
     <section className="screen intro-screen">
       <div className="intro-panel">
         <div className="intro-actions" aria-label="Account actions">
-          {ACCOUNT_ACTIONS.map((action) => (
+          {isAuthenticated ? (
             <button
-              key={action.id}
               type="button"
-              className={`intro-actions__button ${
-                accountMode === action.id ? "is-active" : ""
-              }`}
-              onClick={() => handleAccountAction(action.id)}
+              className="intro-actions__button is-active"
+              onClick={() => onNavigateScreen && onNavigateScreen("settings")}
             >
-              {action.label}
+              Settings
             </button>
-          ))}
+          ) : (
+            ACCOUNT_ACTIONS.map((action) => (
+              <button
+                key={action.id}
+                type="button"
+                className={`intro-actions__button ${
+                  accountMode === action.id ? "is-active" : ""
+                }`}
+                onClick={() => handleAccountAction(action.id)}
+              >
+                {action.label}
+              </button>
+            ))
+          )}
         </div>
 
         <header className="intro-hero">
