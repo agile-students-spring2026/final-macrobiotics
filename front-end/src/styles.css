@@ -76,6 +76,12 @@ body {
   width: min(100%, 260px);
 }
 
+.intro-actions--authenticated {
+  grid-template-columns: none;
+  width: auto;
+  justify-items: end;
+}
+
 .intro-actions__button {
   border: 1px solid #8693a7;
   background: #dde3eb;
@@ -101,6 +107,36 @@ body {
 .intro-secondary-button:hover,
 .intro-recent-searches__item:hover {
   transform: translateY(-1px);
+}
+
+.intro-settings-button {
+  width: 2.9rem;
+  height: 2.9rem;
+  border: 1px solid #c2cfdd;
+  border-radius: 999px;
+  background: #eef4fa;
+  color: #365272;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition:
+    transform 150ms ease,
+    background-color 150ms ease,
+    border-color 150ms ease,
+    box-shadow 150ms ease;
+}
+
+.intro-settings-button:hover {
+  transform: translateY(-1px);
+  background: #f5f9fd;
+  border-color: #aabed3;
+  box-shadow: 0 10px 18px rgba(31, 106, 165, 0.12);
+}
+
+.intro-settings-button svg {
+  width: 1.2rem;
+  height: 1.2rem;
 }
 
 .intro-hero {
