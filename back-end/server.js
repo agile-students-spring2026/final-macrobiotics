@@ -3,9 +3,23 @@ import express from "express";
 import cors from "cors";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { v4 as uuidv4 } from "uuid";
+import {
+  createAuthToken,
+  hashPassword,
+  isValidEmail,
+  isValidPassword,
+  normalizeEmail,
+  requireAuth,
+  verifyPassword,
+} from "./auth.js";
+import { connectToDatabase } from "./config/database.js";
+import redisClient, { ensureRedisConnection } from "./config/redis.js";
+import {
+  createUser,
+  findUserByEmail,
+  replaceUser,
+} from "./repositories/userRepository.js";
 import { getSeatsAeroTripDetail, searchSeatsAeroFlights } from "./seatsAero.js";
-import redisClient from "./config/redis.js";
 import { startPrefetchJob } from "./workers/prefetch.js";
 import { validateSearchParams } from "./seatsAero.js";
 
@@ -19,7 +33,7 @@ app.use(cors({ origin: "http://localhost:5173" }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-app.get("/", (req, res) => {
+app.get("/", (_req, res) => {
   res.send("API route reached successfully");
 });
 
@@ -33,18 +47,24 @@ app.get("/api/search/flights", async (req, res) => {
     );
     const cacheKey = `search:${normalizedOrigin}:${normalizedDestination}:${date}`;
 
-    const cachedData = await redisClient.get(cacheKey);
-    if (cachedData) {
-      return res.status(200).json({
-        message: "Flights retrieved successfully from cache",
-        data: JSON.parse(cachedData),
-      });
+    try {
+      const cacheClient = await ensureRedisConnection();
+      const cachedData = cacheClient ? await cacheClient.get(cacheKey) : null;
+
+      if (cachedData) {
+        return res.status(200).json({
+          message: "Flights retrieved successfully from cache",
+          data: JSON.parse(cachedData),
+        });
+      }
+    } catch (_error) {
+      // Cache availability should not block live search results.
     }
 
     const flights = await searchSeatsAeroFlights({
       origin: normalizedOrigin,
       destination: normalizedDestination,
-      date: date,
+      date,
     });
 
     res.status(200).json({
@@ -79,173 +99,291 @@ app.get(
   },
 );
 
-// Mock user settings (Sprint 2: in-memory, no persistence required)
-const userSettings = {
-  email: "user@example.com",
-  preferences: [
-    { id: "airport", label: "Default Airport", value: "JFK" },
-    { id: "airline", label: "Default Airline", value: "Delta" },
-    {
-      id: "card",
-      label: "Default Credit Card",
-      value: "Chase Sapphire Preferred",
-    },
-  ],
-};
+app.post("/api/login", async (req, res) => {
+  const email = normalizeEmail(req.body?.email);
+  const { password } = req.body ?? {};
 
-app.get("/api/settings/preferences", (_req, res) => {
+  if (!email || !password) {
+    return res.status(400).json({
+      message: "Email and password are required.",
+    });
+  }
+
+  try {
+    const user = await findUserByEmail(email);
+
+    if (!user || !(await verifyPassword(password, user.passwordHash))) {
+      return res.status(401).json({
+        message: "Invalid email or password.",
+      });
+    }
+
+    return res.status(200).json({
+      message: "Login successful.",
+      data: {
+        email: user.email,
+        token: createAuthToken(user),
+      },
+    });
+  } catch (error) {
+    return res.status(500).json({
+      message: error.message ?? "Unable to log in.",
+    });
+  }
+});
+
+app.post("/api/signup", async (req, res) => {
+  const email = normalizeEmail(req.body?.email);
+  const { password } = req.body ?? {};
+
+  if (!email || !password) {
+    return res.status(400).json({
+      message: "Email and password are required.",
+    });
+  }
+
+  if (!isValidEmail(email)) {
+    return res.status(400).json({
+      message: "A valid email address is required.",
+    });
+  }
+
+  if (!isValidPassword(password)) {
+    return res.status(400).json({
+      message: "Password must be at least 6 characters long.",
+    });
+  }
+
+  try {
+    const existingUser = await findUserByEmail(email);
+
+    if (existingUser) {
+      return res.status(409).json({
+        message: "An account with that email already exists.",
+      });
+    }
+
+    const user = await createUser({
+      email,
+      passwordHash: await hashPassword(password),
+    });
+
+    return res.status(201).json({
+      message: "Account successfully created.",
+      data: {
+        email: user.email,
+        token: createAuthToken(user),
+      },
+    });
+  } catch (error) {
+    return res.status(500).json({
+      message: error.message ?? "Unable to create account.",
+    });
+  }
+});
+
+app.get("/api/settings/preferences", requireAuth, async (req, res) => {
   res.status(200).json({
     message: "Preferences retrieved successfully",
-    data: userSettings.preferences,
+    data: req.user.preferences,
   });
 });
 
-app.put("/api/settings/email", (req, res) => {
-  const { previousEmail, newEmail } = req.body;
+app.put("/api/settings/email", requireAuth, async (req, res) => {
+  const previousEmail = normalizeEmail(req.body?.previousEmail);
+  const newEmail = normalizeEmail(req.body?.newEmail);
+
   if (!previousEmail || !newEmail) {
     return res
       .status(400)
       .json({ message: "previousEmail and newEmail are required." });
   }
-  res.status(200).json({ message: "Email updated successfully." });
+
+  if (req.user.email !== previousEmail) {
+    return res.status(400).json({
+      message: "previousEmail does not match the current account.",
+    });
+  }
+
+  if (!isValidEmail(newEmail)) {
+    return res.status(400).json({
+      message: "A valid email address is required.",
+    });
+  }
+
+  const existingUser = await findUserByEmail(newEmail);
+
+  if (existingUser && existingUser.id !== req.user.id) {
+    return res.status(409).json({
+      message: "An account with that email already exists.",
+    });
+  }
+
+  const updatedUser = await replaceUser({
+    ...req.user,
+    email: newEmail,
+  });
+
+  req.user = updatedUser;
+
+  res.status(200).json({
+    message: "Email updated successfully.",
+    data: {
+      email: updatedUser.email,
+    },
+  });
 });
 
-app.put("/api/settings/password", (req, res) => {
-  const { previousPassword, newPassword } = req.body;
+app.put("/api/settings/password", requireAuth, async (req, res) => {
+  const { previousPassword, newPassword } = req.body ?? {};
+
   if (!previousPassword || !newPassword) {
     return res
       .status(400)
       .json({ message: "previousPassword and newPassword are required." });
   }
+
+  if (!(await verifyPassword(previousPassword, req.user.passwordHash))) {
+    return res.status(400).json({
+      message: "previousPassword is incorrect.",
+    });
+  }
+
+  if (!isValidPassword(newPassword)) {
+    return res.status(400).json({
+      message: "Password must be at least 6 characters long.",
+    });
+  }
+
+  const updatedUser = await replaceUser({
+    ...req.user,
+    passwordHash: await hashPassword(newPassword),
+  });
+
+  req.user = updatedUser;
+
   res.status(200).json({ message: "Password updated successfully." });
 });
 
-app.put("/api/settings/preferences", (req, res) => {
+app.put("/api/settings/preferences", requireAuth, async (req, res) => {
   const updates = req.body;
+
   if (!Array.isArray(updates) || updates.length === 0) {
     return res.status(400).json({
       message: "Request body must be a non-empty array of preference updates.",
     });
   }
-  updates.forEach(({ id, value }) => {
-    const pref = userSettings.preferences.find((p) => p.id === id);
-    if (pref) pref.value = value;
+
+  const updatedPreferences = req.user.preferences.map((preference) => {
+    const matchingUpdate = updates.find((update) => update.id === preference.id);
+
+    if (!matchingUpdate) {
+      return preference;
+    }
+
+    return {
+      ...preference,
+      value: matchingUpdate.value,
+    };
   });
-  res.status(200).json({ message: "Preferences updated successfully." });
-});
 
-//TODO: Will need to intercept the flight API to assign our own UUIDs to each flight
+  const updatedUser = await replaceUser({
+    ...req.user,
+    preferences: updatedPreferences,
+  });
 
-let bookmarks = [];
-
-//TODO: Add authenticated route param for users
-app.get("/api/bookmarks", (req, res) => {
-  res
-    .status(200)
-    .json({ message: "Bookmarks retrieved successfully", data: bookmarks });
-});
-
-app.post("/api/bookmarks", (req, res) => {
-  // console.log("Bookmark request received:\n", {
-  //   id: req.body.id,
-  //   flightNo: req.body.flightNo,
-  //   depAirport: req.body.depAirport,
-  //   arrAirport: req.body.arrAirport,
-  // });
-  if (!bookmarks.some((b) => b.id === req.body.id)) {
-    bookmarks.push(req.body);
-    res
-      .status(201)
-      .json({ message: "Bookmark saved successfully.", data: req.body });
-  } else {
-    // console.log("Bookmark already exists for ID:", req.body.id);
-    res.status(400).json({ message: "Bookmark already exists." });
-  }
-});
-
-app.delete("/api/bookmarks/:id", (req, res) => {
-  const id = req.params.id;
-  const index = bookmarks.findIndex((bookmark) => bookmark.id == id);
-  // console.log("Delete request received for ID:", id);
-  // console.log(
-  //   "Currently available IDs:",
-  //   bookmarks.map((b) => b.id),
-  // );
-  // console.log("Bookmark found with index", index);
-  if (index !== -1) {
-    bookmarks.splice(index, 1);
-    res.status(200).json({ message: "Bookmark deleted successfully!" });
-  } else {
-    res.status(404).json({ message: "Bookmark not found." });
-  }
-});
-
-app.get("/", (req, res) => {
-  res.send("Route retrieved successfully");
-});
-
-app.post("/api/login", (req, res) => {
-  const { email, password } = req.body;
-
-  if (!email || !password) {
-    return res.status(400).json({
-      message: "Email and Password required.",
-    });
-  }
+  req.user = updatedUser;
 
   res.status(200).json({
-    message: "Login successful.",
-
-    data: {
-      email,
-    },
+    message: "Preferences updated successfully.",
+    data: updatedUser.preferences,
   });
 });
 
-app.post("/api/signup", (req, res) => {
-  const { email, password } = req.body;
+app.get("/api/bookmarks", requireAuth, (req, res) => {
+  res.status(200).json({
+    message: "Bookmarks retrieved successfully",
+    data: req.user.bookmarks,
+  });
+});
 
-  if (!email || !password) {
+app.post("/api/bookmarks", requireAuth, async (req, res) => {
+  if (!req.body?.id) {
     return res.status(400).json({
-      message: "Email and Password required.",
+      message: "Bookmark id is required.",
     });
   }
 
-  res.status(201).json({
-    message: "Account successfully created.",
+  if (req.user.bookmarks.some((bookmark) => bookmark.id === req.body.id)) {
+    return res.status(400).json({ message: "Bookmark already exists." });
+  }
 
-    data: {
-      email,
-    },
+  const updatedUser = await replaceUser({
+    ...req.user,
+    bookmarks: [...req.user.bookmarks, req.body],
   });
+
+  req.user = updatedUser;
+
+  res.status(201).json({
+    message: "Bookmark saved successfully.",
+    data: req.body,
+  });
+});
+
+app.delete("/api/bookmarks/:id", requireAuth, async (req, res) => {
+  const bookmarkId = req.params.id;
+  const bookmarkExists = req.user.bookmarks.some(
+    (bookmark) => bookmark.id === bookmarkId,
+  );
+
+  if (!bookmarkExists) {
+    return res.status(404).json({ message: "Bookmark not found." });
+  }
+
+  const updatedUser = await replaceUser({
+    ...req.user,
+    bookmarks: req.user.bookmarks.filter(
+      (bookmark) => bookmark.id !== bookmarkId,
+    ),
+  });
+
+  req.user = updatedUser;
+
+  res.status(200).json({ message: "Bookmark deleted successfully!" });
 });
 
 const startServer = async () => {
   try {
-    await redisClient.connect();
+    await connectToDatabase();
 
-    if (process.env.NODE_ENV !== "test" && isDirectExecution) {
-      app.listen(port, () => {
-        console.log(`Server running at http://localhost:${port}`);
+    try {
+      await ensureRedisConnection();
+    } catch (error) {
+      console.warn("Redis cache unavailable at startup:", error.message);
+    }
+
+    app.listen(port, () => {
+      console.log(`Server running at http://localhost:${port}`);
+
+      if (redisClient?.isOpen && process.env.REDIS_URL?.includes("@")) {
         console.log(
           "Connected to Redis at",
           process.env.REDIS_URL.split("@")[1],
         );
+      }
 
-        startPrefetchJob();
-      });
-    }
+      startPrefetchJob();
+    });
   } catch (error) {
-    console.error(
-      "Failed to start server due to Redis connection error:",
-      error,
-    );
+    console.error("Failed to start server:", error);
     process.exit(1);
   }
 };
 
-startServer();
+if (isDirectExecution) {
+  startServer();
+}
 
-export { app };
-export { bookmarks };
+export { app, startServer };
 export default app;

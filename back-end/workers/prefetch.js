@@ -1,5 +1,5 @@
 import cron from "node-cron";
-import redisClient from "../config/redis.js";
+import { ensureRedisConnection } from "../config/redis.js";
 import { normalizeSeatsAeroResults } from "../seatsAero.js";
 //TODO: Import mongoose model for search history
 
@@ -89,6 +89,11 @@ export const runPrefetchJob = async () => {
 
     const flights = normalizeSeatsAeroResults(data);
     const flightsByKey = {};
+    const cacheClient = await ensureRedisConnection();
+
+    if (!cacheClient) {
+      throw new Error("REDIS_URL is not configured on the backend.");
+    }
 
     for (const flight of flights) {
       const cacheKey = `search:${flight.depAirport}:${flight.arrAirport}:${flight.travelDate}`;
@@ -99,7 +104,7 @@ export const runPrefetchJob = async () => {
     }
 
     for (const [key, flightsArray] of Object.entries(flightsByKey)) {
-      await redisClient.setEx(key, 1200, JSON.stringify(flightsArray));
+      await cacheClient.setEx(key, 1200, JSON.stringify(flightsArray));
     }
 
     const duration = Date.now() - jobStartTime;

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { apiClient} from "../api/apiClient";
+import { setAuthToken } from "../api/authToken";
 
 
 function LoginPage({ onGoBack }){
@@ -29,6 +30,10 @@ function LoginPage({ onGoBack }){
 
                 alert(result.message || "Login failed.");
                 return
+            }
+
+            if (result?.data?.token) {
+                setAuthToken(result.data.token);
             }
 
             if (onGoBack){
@@ -65,6 +70,10 @@ function LoginPage({ onGoBack }){
 
                 alert(result.message || "Signup failed.");
                 return
+            }
+
+            if (result?.data?.token) {
+                setAuthToken(result.data.token);
             }
 
             if (onGoBack){
@@ -122,7 +131,7 @@ function LoginPage({ onGoBack }){
                         type="button"
                         onClick={handleLogin}
                     >
-                        Sign Up or Log In
+                        Log In
                     </button>
 
                     <button
@@ -130,7 +139,7 @@ function LoginPage({ onGoBack }){
                         type="button"
                         onClick={handleSignup}
                     >
-                        Sign In With SSO
+                        Create Account
                     </button>
 
                 </div>

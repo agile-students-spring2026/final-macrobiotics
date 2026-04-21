@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import ScreenQuickActions from "../components/ScreenQuickActions";
 import { apiClient } from "../api/apiClient";
+import { clearAuthToken } from "../api/authToken";
 
 function SettingsPage({ activeScreen, onGoBack, onNavigateScreen }) {
   const [activePreference, setActivePreference] = useState(null);
@@ -125,6 +126,21 @@ function SettingsPage({ activeScreen, onGoBack, onNavigateScreen }) {
       setEditAllMode(false);
     } catch (error) {
       console.error("Failed to save preferences:", error);
+    }
+  };
+
+  const handleSignOut = () => {
+    clearAuthToken();
+    setStatusMessage(null);
+    setActiveAccountAction(null);
+
+    if (onNavigateScreen) {
+      onNavigateScreen("intro");
+      return;
+    }
+
+    if (onGoBack) {
+      onGoBack("intro");
     }
   };
 
@@ -260,6 +276,14 @@ function SettingsPage({ activeScreen, onGoBack, onNavigateScreen }) {
                 </form>
               ) : null}
             </div>
+
+            <button
+              className="account-signout-button"
+              type="button"
+              onClick={handleSignOut}
+            >
+              Sign Out
+            </button>
           </div>
 
           <div className="settings-card settings-card--preferences">
