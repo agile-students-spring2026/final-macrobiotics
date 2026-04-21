@@ -30,6 +30,10 @@ body {
   min-height: 100vh;
 }
 
+.screen {
+  width: 100%;
+}
+
 .app-shell {
   width: min(1100px, 100%);
   margin: 0 auto;
@@ -55,6 +59,7 @@ body {
 
 .intro-panel {
   width: min(100%, 760px);
+  margin-inline: auto;
   border: 1px solid #d7dee8;
   border-radius: 1.5rem;
   background: linear-gradient(
@@ -406,6 +411,7 @@ body {
 
 .history-panel {
   width: min(100%, 760px);
+  margin-inline: auto;
   border: 1px solid #d7dee8;
   border-radius: 1.5rem;
   background: linear-gradient(
@@ -803,6 +809,7 @@ body {
 
 .search-results-panel {
   width: min(100%, 900px);
+  margin-inline: auto;
   border: 1px solid #d7dee8;
   border-radius: 1.5rem;
   background: linear-gradient(
@@ -958,6 +965,7 @@ body {
 
 .search-detail-panel {
   width: min(100%, 720px);
+  margin-inline: auto;
   border: 1px solid #d7dee8;
   border-radius: 1.5rem;
   background: linear-gradient(
@@ -1283,6 +1291,7 @@ body {
 .bookmarks-panel,
 .settings-panel {
   width: min(100%, 760px);
+  margin-inline: auto;
   border: 1px solid #d7dee8;
   border-radius: 1.5rem;
   background: linear-gradient(
@@ -1799,6 +1808,7 @@ body {
 
 .login-panel {
   width: min(100%, 460px);
+  margin-inline: auto;
   border: 1px solid #d7dee8;
   border-radius: 1.5rem;
   background: linear-gradient(
