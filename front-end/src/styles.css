@@ -1519,6 +1519,29 @@ body {
   transform: translateY(-1px);
 }
 
+.account-signout-button {
+  width: 100%;
+  padding: 0.9rem 1rem;
+  background: #172131;
+  color: #f7fbff;
+  border: 1px solid #243448;
+  border-radius: 0.85rem;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    transform 150ms ease,
+    border-color 150ms ease,
+    background-color 150ms ease,
+    box-shadow 150ms ease;
+}
+
+.account-signout-button:hover {
+  transform: translateY(-1px);
+  background: #1e2c40;
+  border-color: #324964;
+}
+
 .preference-edit-all-row {
   display: grid;
   gap: 0.45rem;
