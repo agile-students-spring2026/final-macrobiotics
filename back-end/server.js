@@ -19,9 +19,11 @@ import {
   findUserByEmail,
   replaceUser,
 } from "./repositories/userRepository.js";
+import User from "./models/User.js";
 import { getSeatsAeroTripDetail, searchSeatsAeroFlights } from "./seatsAero.js";
 import { startPrefetchJob } from "./workers/prefetch.js";
 import { validateSearchParams } from "./seatsAero.js";
+import { isDatabaseConnected } from "./config/database.js";
 
 const app = express();
 const port = 3000;
@@ -275,7 +277,9 @@ app.put("/api/settings/preferences", requireAuth, async (req, res) => {
   }
 
   const updatedPreferences = req.user.preferences.map((preference) => {
-    const matchingUpdate = updates.find((update) => update.id === preference.id);
+    const matchingUpdate = updates.find(
+      (update) => update.id === preference.id,
+    );
 
     if (!matchingUpdate) {
       return preference;
@@ -300,55 +304,121 @@ app.put("/api/settings/preferences", requireAuth, async (req, res) => {
   });
 });
 
-app.get("/api/bookmarks", requireAuth, (req, res) => {
+app.get("/api/bookmarks", requireAuth, async (req, res) => {
+  if (!isDatabaseConnected()) {
+    return res.status(503).json({
+      message: "Database connection is required to retrieve bookmarks.",
+    });
+  }
+
+  const user = await User.findById(req.user.id, {
+    bookmarks: 1,
+  });
+
+  if (!user) {
+    return res.status(404).json({ message: "User not found." });
+  }
+
   res.status(200).json({
     message: "Bookmarks retrieved successfully",
-    data: req.user.bookmarks,
+    data: user.bookmarks ?? [],
   });
 });
 
 app.post("/api/bookmarks", requireAuth, async (req, res) => {
-  if (!req.body?.id) {
+  const bookmarkPayload = req.body;
+
+  if (!bookmarkPayload?.id) {
     return res.status(400).json({
       message: "Bookmark id is required.",
     });
   }
 
-  if (req.user.bookmarks.some((bookmark) => bookmark.id === req.body.id)) {
-    return res.status(400).json({ message: "Bookmark already exists." });
+  if (!isDatabaseConnected()) {
+    return res.status(503).json({
+      message: "Database connection is required to save bookmarks.",
+    });
   }
 
-  const updatedUser = await replaceUser({
-    ...req.user,
-    bookmarks: [...req.user.bookmarks, req.body],
+  const userId = req.user.id;
+
+  const existingBookmark = await User.exists({
+    _id: userId,
+    "bookmarks.id": bookmarkPayload.id,
   });
 
-  req.user = updatedUser;
+  if (existingBookmark) {
+    const updateResult = await User.updateOne(
+      { _id: userId, "bookmarks.id": bookmarkPayload.id },
+      {
+        $set: {
+          "bookmarks.$": bookmarkPayload,
+        },
+      },
+    );
+
+    if (!updateResult.matchedCount) {
+      return res.status(404).json({ message: "User not found." });
+    }
+
+    return res.status(200).json({
+      message: "Bookmark updated successfully.",
+      data: bookmarkPayload,
+    });
+  }
+
+  const createdBookmarkUser = await User.findByIdAndUpdate(
+    userId,
+    {
+      $push: {
+        bookmarks: bookmarkPayload,
+      },
+    },
+    {
+      new: true,
+      projection: { _id: 1 },
+    },
+  );
+
+  if (!createdBookmarkUser) {
+    return res.status(404).json({ message: "User not found." });
+  }
 
   res.status(201).json({
     message: "Bookmark saved successfully.",
-    data: req.body,
+    data: bookmarkPayload,
   });
 });
 
 app.delete("/api/bookmarks/:id", requireAuth, async (req, res) => {
+  if (!isDatabaseConnected()) {
+    return res.status(503).json({
+      message: "Database connection is required to delete bookmarks.",
+    });
+  }
+
   const bookmarkId = req.params.id;
-  const bookmarkExists = req.user.bookmarks.some(
-    (bookmark) => bookmark.id === bookmarkId,
-  );
+  const bookmarkExists = await User.exists({
+    _id: req.user.id,
+    "bookmarks.id": bookmarkId,
+  });
 
   if (!bookmarkExists) {
     return res.status(404).json({ message: "Bookmark not found." });
   }
 
-  const updatedUser = await replaceUser({
-    ...req.user,
-    bookmarks: req.user.bookmarks.filter(
-      (bookmark) => bookmark.id !== bookmarkId,
-    ),
-  });
+  const updateResult = await User.updateOne(
+    { _id: req.user.id },
+    {
+      $pull: {
+        bookmarks: { id: bookmarkId },
+      },
+    },
+  );
 
-  req.user = updatedUser;
+  if (!updateResult.matchedCount) {
+    return res.status(404).json({ message: "User not found." });
+  }
 
   res.status(200).json({ message: "Bookmark deleted successfully!" });
 });
@@ -365,6 +435,16 @@ const startServer = async () => {
 
     app.listen(port, () => {
       console.log(`Server running at http://localhost:${port}`);
+
+      const mongoUri = process.env.MONGO_URI;
+
+      if (isDatabaseConnected() && mongoUri?.includes("@")) {
+        const mongoClusterDomain = mongoUri.split("@")[1]?.split("/")[0] ?? "";
+
+        if (mongoClusterDomain) {
+          console.log("Connected to MongoDB at", mongoClusterDomain);
+        }
+      }
 
       if (redisClient?.isOpen && process.env.REDIS_URL?.includes("@")) {
         console.log(
