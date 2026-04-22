@@ -411,6 +411,16 @@ const startServer = async () => {
     app.listen(port, () => {
       console.log(`Server running at http://localhost:${port}`);
 
+      const mongoUri = process.env.MONGO_URI;
+
+      if (isDatabaseConnected() && mongoUri?.includes("@")) {
+        const mongoClusterDomain = mongoUri.split("@")[1]?.split("/")[0] ?? "";
+
+        if (mongoClusterDomain) {
+          console.log("Connected to MongoDB at", mongoClusterDomain);
+        }
+      }
+
       if (redisClient?.isOpen && process.env.REDIS_URL?.includes("@")) {
         console.log(
           "Connected to Redis at",
