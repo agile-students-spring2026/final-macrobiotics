@@ -304,10 +304,24 @@ app.put("/api/settings/preferences", requireAuth, async (req, res) => {
   });
 });
 
-app.get("/api/bookmarks", requireAuth, (req, res) => {
+app.get("/api/bookmarks", requireAuth, async (req, res) => {
+  if (!isDatabaseConnected()) {
+    return res.status(503).json({
+      message: "Database connection is required to retrieve bookmarks.",
+    });
+  }
+
+  const user = await User.findById(req.user.id, {
+    bookmarks: 1,
+  });
+
+  if (!user) {
+    return res.status(404).json({ message: "User not found." });
+  }
+
   res.status(200).json({
     message: "Bookmarks retrieved successfully",
-    data: req.user.bookmarks,
+    data: user.bookmarks ?? [],
   });
 });
 
@@ -377,23 +391,34 @@ app.post("/api/bookmarks", requireAuth, async (req, res) => {
 });
 
 app.delete("/api/bookmarks/:id", requireAuth, async (req, res) => {
+  if (!isDatabaseConnected()) {
+    return res.status(503).json({
+      message: "Database connection is required to delete bookmarks.",
+    });
+  }
+
   const bookmarkId = req.params.id;
-  const bookmarkExists = req.user.bookmarks.some(
-    (bookmark) => bookmark.id === bookmarkId,
-  );
+  const bookmarkExists = await User.exists({
+    _id: req.user.id,
+    "bookmarks.id": bookmarkId,
+  });
 
   if (!bookmarkExists) {
     return res.status(404).json({ message: "Bookmark not found." });
   }
 
-  const updatedUser = await replaceUser({
-    ...req.user,
-    bookmarks: req.user.bookmarks.filter(
-      (bookmark) => bookmark.id !== bookmarkId,
-    ),
-  });
+  const updateResult = await User.updateOne(
+    { _id: req.user.id },
+    {
+      $pull: {
+        bookmarks: { id: bookmarkId },
+      },
+    },
+  );
 
-  req.user = updatedUser;
+  if (!updateResult.matchedCount) {
+    return res.status(404).json({ message: "User not found." });
+  }
 
   res.status(200).json({ message: "Bookmark deleted successfully!" });
 });

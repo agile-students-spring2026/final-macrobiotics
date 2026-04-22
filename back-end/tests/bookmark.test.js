@@ -5,10 +5,7 @@ import sinon from "sinon";
 import app from "../server.js";
 import { resetAuthState, signupAndGetToken } from "./authTestUtils.js";
 import User from "../models/User.js";
-import {
-  findUserByEmail,
-  replaceUser,
-} from "../repositories/userRepository.js";
+import { findUserByEmail } from "../repositories/userRepository.js";
 
 const { expect } = chai;
 
@@ -41,6 +38,36 @@ describe("Bookmarks API", () => {
   });
 
   describe("GET /api/bookmarks", () => {
+    let previousReadyState;
+
+    beforeEach(async () => {
+      const signedUpUser = await findUserByEmail(userEmail);
+
+      previousReadyState = mongoose.connection.readyState;
+      mongoose.connection.readyState = 1;
+
+      sandbox.stub(User, "findById").callsFake(async (_id, projection) => {
+        if (projection?.bookmarks) {
+          return {
+            _id: signedUpUser.id,
+            bookmarks: [],
+          };
+        }
+
+        return {
+          _id: signedUpUser.id,
+          email: signedUpUser.email,
+          passwordHash: signedUpUser.passwordHash,
+          preferences: signedUpUser.preferences,
+          bookmarks: signedUpUser.bookmarks,
+        };
+      });
+    });
+
+    afterEach(() => {
+      mongoose.connection.readyState = previousReadyState;
+    });
+
     it("returns 401 without authorization", async () => {
       const res = await request(app).get("/api/bookmarks").expect(401);
 
@@ -165,18 +192,31 @@ describe("Bookmarks API", () => {
   });
 
   describe("DELETE /api/bookmarks/:id", () => {
-    it("deletes an existing bookmark", async () => {
-      const bookmark = {
-        id: "test-id-3",
-        flightNo: "CC789",
-        depAirport: "MIA",
-        arrAirport: "SEA",
-      };
+    let previousReadyState;
 
-      const user = await findUserByEmail(userEmail);
-      await replaceUser({
-        ...user,
-        bookmarks: [bookmark],
+    beforeEach(async () => {
+      const signedUpUser = await findUserByEmail(userEmail);
+
+      previousReadyState = mongoose.connection.readyState;
+      mongoose.connection.readyState = 1;
+
+      sandbox.stub(User, "findById").resolves({
+        _id: signedUpUser.id,
+        email: signedUpUser.email,
+        passwordHash: signedUpUser.passwordHash,
+        preferences: signedUpUser.preferences,
+        bookmarks: signedUpUser.bookmarks,
+      });
+    });
+
+    afterEach(() => {
+      mongoose.connection.readyState = previousReadyState;
+    });
+
+    it("deletes an existing bookmark", async () => {
+      sandbox.stub(User, "exists").resolves({ _id: "mock-user-id" });
+      const updateStub = sandbox.stub(User, "updateOne").resolves({
+        matchedCount: 1,
       });
 
       const res = await request(app)
@@ -188,9 +228,12 @@ describe("Bookmarks API", () => {
         "message",
         "Bookmark deleted successfully!",
       );
+      expect(updateStub.calledOnce).to.equal(true);
     });
 
     it("returns 404 for non-existent bookmark", async () => {
+      sandbox.stub(User, "exists").resolves(null);
+
       const res = await request(app)
         .delete("/api/bookmarks/non-existent-id")
         .set("Authorization", `Bearer ${token}`)
