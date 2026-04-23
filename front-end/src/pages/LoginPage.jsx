@@ -1,13 +1,90 @@
 import { useState } from "react";
+import { apiClient} from "../api/apiClient";
+import { setAuthToken } from "../api/authToken";
+
 
 function LoginPage({ onGoBack }){
 
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
 
-    function handleContinue() {
-        if (onGoBack) {
-            onGoBack("intro");
+    async function handleLogin(){
+
+        if(!email || !password){
+
+            alert("Please enter email and password");
+            return;
+        }
+
+        try {
+            
+            const response = await apiClient("/api/login", {
+
+                method: "POST",
+                body: JSON.stringify({ email, password })
+            });
+
+            const result = await response.json();
+
+            if (!response.ok) {
+
+                alert(result.message || "Login failed.");
+                return
+            }
+
+            if (result?.data?.token) {
+                setAuthToken(result.data.token);
+            }
+
+            if (onGoBack){
+
+                onGoBack("intro")
+            }
+        }
+
+        catch (error){
+
+            alert("Unable to reach server.");
+        }
+    }
+
+    async function handleSignup(){
+
+        if(!email || !password){
+
+            alert("Please enter email and password");
+            return;
+        }
+
+        try {
+            
+            const response = await apiClient("/api/signup", {
+
+                method: "POST",
+                body: JSON.stringify({ email, password })
+            });
+
+            const result = await response.json();
+
+            if (!response.ok) {
+
+                alert(result.message || "Signup failed.");
+                return
+            }
+
+            if (result?.data?.token) {
+                setAuthToken(result.data.token);
+            }
+
+            if (onGoBack){
+
+                onGoBack("intro")
+            }
+        }
+
+        catch (error){
+
+            alert("Unable to reach server.");
         }
     }
 
@@ -52,17 +129,17 @@ function LoginPage({ onGoBack }){
                     <button
                         className="default-login-button"
                         type="button"
-                        onClick={handleContinue}
+                        onClick={handleLogin}
                     >
-                        Sign Up or Log In
+                        Log In
                     </button>
 
                     <button
                         className="sso-login-button"
                         type="button"
-                        onClick={handleContinue}
+                        onClick={handleSignup}
                     >
-                        Sign In With SSO
+                        Create Account
                     </button>
 
                 </div>

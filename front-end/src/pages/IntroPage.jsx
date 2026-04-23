@@ -1,4 +1,5 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { loadRecentSearches } from "../utils/recentSearches";
 
 const ACCOUNT_ACTIONS = [
   { id: "signup", label: "Sign up" },
@@ -24,9 +25,10 @@ const TRAVELER_OPTIONS = [
   { value: "8", label: "8" },
 ];
 
-function IntroPage({ onNavigateScreen }) {
+function IntroPage({ isAuthenticated, onNavigateScreen, onStartSearch }) {
   const [accountMode, setAccountMode] = useState("signup");
   const [isAdvancedOpen, setIsAdvancedOpen] = useState(false);
+  const [recentSearches, setRecentSearches] = useState([]);
   const dateInputRef = useRef(null);
   const [formValues, setFormValues] = useState({
     from: "",
@@ -38,11 +40,16 @@ function IntroPage({ onNavigateScreen }) {
     travelers: "1",
   });
 
+  useEffect(() => {
+    setRecentSearches(loadRecentSearches().slice(0, 4));
+  }, []);
+
   function handleFieldChange(event) {
     const { name, value } = event.target;
     setFormValues((currentValues) => ({
       ...currentValues,
-      [name]: value,
+      [name]:
+        name === "from" || name === "to" ? value.toUpperCase() : value,
     }));
   }
 
@@ -67,22 +74,93 @@ function IntroPage({ onNavigateScreen }) {
     dateInputRef.current.focus();
   }
 
+  function handleSearchClick() {
+    if (!onStartSearch) {
+      onNavigateScreen && onNavigateScreen("search-results");
+      return;
+    }
+
+    onStartSearch({
+      from: formValues.from.trim().toUpperCase(),
+      to: formValues.to.trim().toUpperCase(),
+      date: formValues.date,
+      classType: formValues.classType,
+      airlines: formValues.airlines,
+      miles: formValues.miles,
+      travelers: formValues.travelers,
+    });
+  }
+
+  function handleRecentSearchClick(search) {
+    const nextFormValues = {
+      from: search.origin,
+      to: search.destination,
+      classType: search.cabin === "Any Cabin" ? "" : search.cabin.toLowerCase().replace(/\s+/g, "-"),
+      date: search.travelDate,
+      airlines: search.preferredAirline === "Any Airline" ? "" : search.preferredAirline,
+      miles: search.milesRange === "Any" ? "" : search.milesRange,
+      travelers: String(search.travelers || 1),
+    };
+
+    setFormValues(nextFormValues);
+
+    if (!onStartSearch) {
+      onNavigateScreen && onNavigateScreen("search-results");
+      return;
+    }
+
+    onStartSearch(nextFormValues);
+  }
+
   return (
     <section className="screen intro-screen">
       <div className="intro-panel">
-        <div className="intro-actions" aria-label="Account actions">
-          {ACCOUNT_ACTIONS.map((action) => (
+        <div
+          className={`intro-actions${
+            isAuthenticated ? " intro-actions--authenticated" : ""
+          }`}
+          aria-label="Account actions"
+        >
+          {isAuthenticated ? (
             <button
-              key={action.id}
               type="button"
-              className={`intro-actions__button ${
-                accountMode === action.id ? "is-active" : ""
-              }`}
-              onClick={() => handleAccountAction(action.id)}
+              className="intro-settings-button"
+              onClick={() => onNavigateScreen && onNavigateScreen("settings")}
+              aria-label="Settings"
+              title="Settings"
             >
-              {action.label}
+              <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                <path
+                  d="m9.75 4.5.39 1.53a6.9 6.9 0 0 1 1.86 0l.39-1.53h2.36l.55 1.48a6.9 6.9 0 0 1 1.61.93l1.5-.55 1.67 1.67-.55 1.5c.37.5.68 1.04.92 1.61l1.49.55v2.36l-1.49.55a6.9 6.9 0 0 1-.92 1.61l.55 1.5-1.67 1.67-1.5-.55a6.9 6.9 0 0 1-1.61.92l-.55 1.49H9.75l-.55-1.49a6.9 6.9 0 0 1-1.61-.92l-1.5.55-1.67-1.67.55-1.5a6.9 6.9 0 0 1-.92-1.61l-1.49-.55V11.3l1.49-.55c.24-.57.55-1.11.92-1.61l-.55-1.5L6.09 5.9l1.5.55c.5-.37 1.04-.68 1.61-.93l.55-1.48h2.36Z"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.6"
+                  strokeLinejoin="round"
+                />
+                <circle
+                  cx="12"
+                  cy="12.5"
+                  r="2.6"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.6"
+                />
+              </svg>
             </button>
-          ))}
+          ) : (
+            ACCOUNT_ACTIONS.map((action) => (
+              <button
+                key={action.id}
+                type="button"
+                className={`intro-actions__button ${
+                  accountMode === action.id ? "is-active" : ""
+                }`}
+                onClick={() => handleAccountAction(action.id)}
+              >
+                {action.label}
+              </button>
+            ))
+          )}
         </div>
 
         <header className="intro-hero">
@@ -106,7 +184,8 @@ function IntroPage({ onNavigateScreen }) {
                 type="text"
                 value={formValues.from}
                 onChange={handleFieldChange}
-                placeholder="Departure city"
+                placeholder="Departure airport"
+                maxLength={3}
               />
             </label>
 
@@ -117,7 +196,8 @@ function IntroPage({ onNavigateScreen }) {
                 type="text"
                 value={formValues.to}
                 onChange={handleFieldChange}
-                placeholder="Destination"
+                placeholder="Arrival airport"
+                maxLength={3}
               />
             </label>
 
@@ -179,13 +259,29 @@ function IntroPage({ onNavigateScreen }) {
             <button
               type="button"
               className="intro-primary-button"
-              onClick={() =>
-                onNavigateScreen && onNavigateScreen("search-results")
-              }
+              onClick={handleSearchClick}
             >
               Search
             </button>
           </div>
+
+          {recentSearches.length > 0 ? (
+            <div className="intro-advanced">
+              <h3 className="intro-advanced__title">Recent Searches</h3>
+              <div className="intro-recent-searches">
+                {recentSearches.map((search) => (
+                  <button
+                    key={search.id}
+                    type="button"
+                    className="intro-recent-searches__item"
+                    onClick={() => handleRecentSearchClick(search)}
+                  >
+                    {search.origin} to {search.destination}
+                  </button>
+                ))}
+              </div>
+            </div>
+          ) : null}
 
           <div className="intro-advanced">
             <h3 className="intro-advanced__title">

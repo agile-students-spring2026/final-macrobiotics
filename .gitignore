@@ -125,6 +125,9 @@ typings/
 # Frontend build output
 front-end/dist/
 
+# Local-only helper scripts
+.local-tools/
+
 
 ## Emacs artefacts ##
 *~

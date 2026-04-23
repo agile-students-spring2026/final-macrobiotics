@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import ScreenQuickActions from "../components/ScreenQuickActions";
+import { loadRecentSearches } from "../utils/recentSearches";
 
 const DATE_FORMATTER = new Intl.DateTimeFormat("en-US", {
   month: "short",
@@ -28,47 +29,23 @@ function HistoryPage({ activeScreen, onNavigateScreen, onGoBack }) {
   const [loadError, setLoadError] = useState("");
 
   useEffect(() => {
-    let isMounted = true;
-
-    async function loadHistory() {
-      try {
-        const response = await fetch("/mock/recent-searches.json");
-
-        if (!response.ok) {
-          throw new Error("Unable to load recent searches.");
-        }
-
-        const recentSearches = await response.json();
-
-        if (isMounted) {
-          setSearches(recentSearches);
-          setLoadError("");
-        }
-      } catch (error) {
-        if (isMounted) {
-          setSearches([]);
-          setLoadError("Unable to load recent searches.");
-        }
-      } finally {
-        if (isMounted) {
-          setIsLoading(false);
-        }
-      }
+    try {
+      setSearches(loadRecentSearches());
+      setLoadError("");
+    } catch {
+      setSearches([]);
+      setLoadError("Unable to load recent searches.");
+    } finally {
+      setIsLoading(false);
     }
-
-    loadHistory();
-
-    return () => {
-      isMounted = false;
-    };
   }, []);
 
   const filteredSearches = useMemo(() => {
     return searches.filter((search) => {
-      const airlineMatches = search.preferredAirline
+      const airlineMatches = (search.preferredAirline || "")
         .toLowerCase()
         .includes(filters.airline.trim().toLowerCase());
-      const destinationMatches = search.destination
+      const destinationMatches = (search.destination || "")
         .toLowerCase()
         .includes(filters.destination.trim().toLowerCase());
       const dateMatches = !filters.date || search.travelDate === filters.date;
