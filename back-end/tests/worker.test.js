@@ -1,11 +1,15 @@
 import { expect } from "chai";
 import cron from "node-cron";
+import mongoose from "mongoose";
+import sinon from "sinon";
 import redisClient from "../config/redis.js";
+import SearchHistory from "../models/SearchHistory.js";
 import { mockApiResponse } from "./data/prefetch.data.js";
 import {
   startPrefetchJob,
   runPrefetchJob,
   buildSearchUrl,
+  getPrefetchTargets,
 } from "../workers/prefetch.js";
 
 describe("Prefetch Job", () => {
@@ -15,6 +19,8 @@ describe("Prefetch Job", () => {
   let originalRedisSetEx;
   let originalConsoleLog;
   let originalNpmLifecycleEvent;
+  let originalReadyState;
+  let sandbox;
 
   beforeEach(() => {
     delete process.env.SEATS_AERO_API;
@@ -28,6 +34,9 @@ describe("Prefetch Job", () => {
     originalSchedule = cron.schedule;
     originalRedisSetEx = redisClient.setEx;
     originalConsoleLog = console.log;
+    originalReadyState = mongoose.connection.readyState;
+    sandbox = sinon.createSandbox();
+    sandbox.useFakeTimers(new Date("2026-04-26T12:00:00Z"));
   });
 
   afterEach(() => {
@@ -37,6 +46,8 @@ describe("Prefetch Job", () => {
     redisClient.setEx = originalRedisSetEx;
     console.log = originalConsoleLog;
     process.env.npm_lifecycle_event = originalNpmLifecycleEvent;
+    mongoose.connection.readyState = originalReadyState;
+    sandbox.restore();
   });
 
   describe("buildSearchUrl()", () => {
@@ -125,6 +136,148 @@ describe("Prefetch Job", () => {
       expect(firstSave.value).to.have.length.greaterThan(0);
 
       expect(firstSave.value[0].id).to.include("39VjFUDvgm1Si8XLI3za0KSIgFE");
+    });
+
+    it("should prefetch the top exact searches when history-derived targets are available", async () => {
+      process.env.SEATS_AERO_API = "fake-test-key";
+      mongoose.connection.readyState = 1;
+      sandbox.stub(SearchHistory, "aggregate").resolves([
+        {
+          _id: {
+            origin: "JFK",
+            destination: "LHR",
+          },
+          count: 7,
+          lastSearchedAt: new Date("2026-04-26T10:00:00.000Z"),
+        },
+        {
+          _id: {
+            origin: "SFO",
+            destination: "HND",
+          },
+          count: 5,
+          lastSearchedAt: new Date("2026-04-25T09:00:00.000Z"),
+        },
+      ]);
+
+      const secondApiResponse = {
+        data: [
+          {
+            ID: "avail-2",
+            Source: "ana",
+            Date: "2026-05-02",
+            Route: {
+              OriginAirport: "SFO",
+              DestinationAirport: "HND",
+            },
+            YAvailable: true,
+            YMileageCost: 50000,
+            AvailabilityTrips: [
+              {
+                ID: "trip-2",
+                MileageCost: 50000,
+                TotalDuration: 660,
+                Stops: 0,
+                Carriers: "NH",
+                FlightNumbers: "NH7",
+                OriginAirport: "SFO",
+                DestinationAirport: "HND",
+                DepartsAt: "2026-05-02T17:00:00Z",
+                ArrivesAt: "2026-05-03T04:00:00Z",
+                Cabin: "economy",
+                Source: "ana",
+              },
+            ],
+          },
+        ],
+      };
+
+      const fetchUrls = [];
+      const fetchResponses = [mockApiResponse, secondApiResponse];
+      global.fetch = async (url) => {
+        fetchUrls.push(url);
+
+        const responseBody = fetchResponses.shift();
+
+        return {
+          ok: true,
+          json: async () => responseBody,
+        };
+      };
+
+      const redisSaves = [];
+      redisClient.setEx = async (key, ttl, value) => {
+        redisSaves.push({ key, ttl, value: JSON.parse(value) });
+        return "OK";
+      };
+
+      console.log = () => {};
+
+      await runPrefetchJob();
+
+      expect(fetchUrls).to.have.lengthOf(2);
+      expect(fetchUrls[0]).to.include("origin_airport=JFK");
+      expect(fetchUrls[0]).to.include("destination_airport=LHR");
+      expect(fetchUrls[0]).to.include("start_date=2026-04-26");
+      expect(fetchUrls[0]).to.include("end_date=2026-05-26");
+      expect(fetchUrls[1]).to.include("origin_airport=SFO");
+      expect(fetchUrls[1]).to.include("destination_airport=HND");
+      expect(fetchUrls[1]).to.include("start_date=2026-04-26");
+      expect(fetchUrls[1]).to.include("end_date=2026-05-26");
+
+      expect(redisSaves.map((save) => save.key)).to.deep.equal([
+        "search:JFK:LHR:2026-04-30",
+        "search:SFO:HND:2026-05-02",
+      ]);
+    });
+  });
+
+  describe("getPrefetchTargets()", () => {
+    it("should turn top searched route pairs into rolling 30-day prefetch targets", async () => {
+      mongoose.connection.readyState = 1;
+      sandbox.stub(SearchHistory, "aggregate").resolves([
+        {
+          _id: {
+            origin: "JFK",
+            destination: "LHR",
+          },
+          count: 7,
+          lastSearchedAt: new Date("2026-04-26T10:00:00.000Z"),
+        },
+        {
+          _id: {
+            origin: "SFO",
+            destination: "HND",
+          },
+          count: 5,
+          lastSearchedAt: new Date("2026-04-25T09:00:00.000Z"),
+        },
+      ]);
+
+      const targets = await getPrefetchTargets();
+
+      expect(targets).to.deep.equal([
+        {
+          origin: "JFK",
+          destination: "LHR",
+          startDate: "2026-04-26",
+          endDate: "2026-05-26",
+        },
+        {
+          origin: "SFO",
+          destination: "HND",
+          startDate: "2026-04-26",
+          endDate: "2026-05-26",
+        },
+      ]);
+    });
+
+    it("should fall back to the broad static query when history-derived targets are unavailable", async () => {
+      const targets = await getPrefetchTargets();
+
+      expect(targets).to.have.lengthOf(1);
+      expect(targets[0].origin).to.include("JFK");
+      expect(targets[0].destination).to.include("LHR");
     });
   });
 });
