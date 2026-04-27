@@ -1,127 +1,119 @@
 # Milely
 
-Frontend setup instructions for the current React/Vite app.
+Milely is a React and Express app for searching award flight availability, viewing trip details, and managing saved flights and account preferences.
 
-## Run the Frontend
+The app is split into two npm projects:
 
-### Windows
+- `front-end`: React 18 app served by Vite.
+- `back-end`: Express API with MongoDB persistence, optional Redis caching, and Seats.aero partner API integration.
 
-1. Open PowerShell in the project root.
-2. Move into the frontend folder:
+## Prerequisites
 
-```powershell
-cd front-end
+- Node.js `20.19.0` or newer in the Node 20 line, or Node.js `22.12.0` or newer.
+- npm, included with Node.js.
+- A MongoDB connection string. A local MongoDB instance or MongoDB Atlas connection both work.
+- A Seats.aero partner API key for live flight search.
+- Optional: Redis, if you want search result caching and the prefetch worker to persist cached results.
+
+## Environment Variables
+
+Create a `.env` file in the repository root. The backend loads environment variables from `back-end/.env` or the root `.env`; keeping one root file is the simplest setup.
+
+```env
+MONGO_URI=mongodb://127.0.0.1:27017/milely
+SEATS_AERO_API=your_partner_api_key_here
+JWT_SECRET=replace_with_a_long_random_secret
+
+# Optional
+REDIS_URL=redis://127.0.0.1:6379
 ```
 
-3. Install dependencies:
+Variable notes:
 
-```powershell
+- `MONGO_URI` is required. The backend will not start without it.
+- `SEATS_AERO_API` is required for live search and trip detail endpoints.
+- `JWT_SECRET` is optional for local development, but should be set for any shared or deployed environment.
+- `REDIS_URL` is optional. If omitted, the API still runs without caching.
+
+If your frontend needs to call a backend URL other than `http://localhost:3000`, create `front-end/.env`:
+
+```env
+VITE_API_BASE_URL=http://localhost:3000
+```
+
+## Install Dependencies
+
+Install dependencies separately for the backend and frontend.
+
+```bash
+cd back-end
+npm install
+
+cd ../front-end
 npm install
 ```
 
-4. Start the development server:
-
-```powershell
-npm run dev
-```
-
-5. Open the local URL shown in the terminal.
-
-### macOS
-
-1. Open Terminal in the project root.
-2. Move into the frontend folder:
-
-```bash
-cd front-end
-```
-
-3. Install dependencies:
-
-```bash
-npm install
-```
-
-4. Start the development server:
-
-```bash
-npm run dev
-```
-
-5. Open the local URL shown in the terminal.
-
-## Build the Frontend
-
-From the `front-end` folder on either Windows or macOS:
-
-```bash
-npm run build
-```
+On Windows PowerShell, use the same commands.
 
 ## Run the Backend
 
-The backend must be running alongside the frontend for full functionality. Open a **separate terminal** and follow these steps.
-
-Before starting the backend, create a root-level `.env` file with your Seats.aero partner API key:
-
-```env
-SEATS_AERO_API=your_partner_api_key_here
-```
-
-### Windows
-
-1. Open PowerShell in the project root.
-2. Move into the backend folder:
-
-```powershell
-cd back-end
-```
-
-3. Install dependencies:
-
-```powershell
-npm install
-```
-
-4. Start the backend server:
-
-```powershell
-npm start
-```
-
-5. The API will be available at `http://localhost:3000`.
-
-### macOS
-
-1. Open Terminal in the project root.
-2. Move into the backend folder:
+Start MongoDB first, then start the API in one terminal:
 
 ```bash
 cd back-end
-```
-
-3. Install dependencies:
-
-```bash
-npm install
-```
-
-4. Start the backend server:
-
-```bash
 npm start
 ```
 
-5. The API will be available at `http://localhost:3000`.
+The API runs at `http://localhost:3000`.
 
-> **Note:** The frontend dev server and backend server must both be running at the same time. Start each in its own terminal window.
+Useful checks:
 
-## Run Backend Tests
+- Open `http://localhost:3000/` and expect `API route reached successfully`.
+- If Redis is not configured, startup may still succeed; Redis is optional.
+- If startup fails with `MONGO_URI is not configured on the backend.`, check that `.env` exists and includes `MONGO_URI`.
 
-From the `back-end` folder:
+## Run the Frontend
+
+With the backend still running, open a second terminal:
 
 ```bash
+cd front-end
+npm run dev
+```
+
+Open the Vite URL shown in the terminal. By default it is `http://localhost:5173`.
+
+The backend currently allows browser requests from `http://localhost:5173`. If Vite starts on another port because `5173` is busy, stop the other process or update the backend CORS origin before using the app in the browser.
+
+## Local Development Flow
+
+1. Start MongoDB.
+2. Optional: start Redis.
+3. Start the backend from `back-end` with `npm start`.
+4. Start the frontend from `front-end` with `npm run dev`.
+5. Use the app at `http://localhost:5173`.
+
+Both servers need to run at the same time for login, signup, search, bookmarks, and settings to work.
+
+## Test and Build
+
+Run backend tests:
+
+```bash
+cd back-end
 npm test
 ```
 
-This runs all Mocha/Chai unit tests and reports code coverage via c8.
+Build the frontend production bundle:
+
+```bash
+cd front-end
+npm run build
+```
+
+Preview the production frontend build:
+
+```bash
+cd front-end
+npm run preview
+```
