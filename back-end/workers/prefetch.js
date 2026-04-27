@@ -1,7 +1,7 @@
 import cron from "node-cron";
 import { ensureRedisConnection } from "../config/redis.js";
 import { normalizeSeatsAeroResults } from "../seatsAero.js";
-//TODO: Import mongoose model for search history
+import { getTopSearchedRoutes } from "../repositories/searchRepository.js";
 
 const SEATS_AERO_BASE_URL = "https://seats.aero/partnerapi/search?";
 const isTestRun =
@@ -18,20 +18,38 @@ const getFormattedDate = (daysToAdd) => {
   return date.toISOString().split("T")[0];
 };
 
-const getTargetAirports = async () => {
+const getFallbackSearchTargets = () => {
   const staticOrigins = ["JFK", "EWR", "LAX", "SFO", "ORD", "ATL"];
   const staticDestinations = ["LHR", "HND", "CDG", "FRA", "IST", "SIN"];
 
-  //TODO: Aggregate most frequently searched nodes from Mongo collection
-  let dynamicOrigins = [];
-  let dynamicDestinations = [];
-
-  const originsToCache = [...new Set([...staticOrigins, ...dynamicOrigins])];
-  const destinationsToCache = [
-    ...new Set([...staticDestinations, ...dynamicDestinations]),
+  return [
+    {
+      origin: staticOrigins.join(","),
+      destination: staticDestinations.join(","),
+      startDate: getFormattedDate(0),
+      endDate: getFormattedDate(30),
+    },
   ];
+};
 
-  return { origins: originsToCache, destinations: destinationsToCache };
+export const getPrefetchTargets = async () => {
+  try {
+    const topRoutes = await getTopSearchedRoutes({
+      limit: 12,
+      lookbackDays: 30,
+    });
+
+    if (topRoutes.length > 0) {
+      return topRoutes.map((route) => ({
+        origin: route.origin,
+        destination: route.destination,
+        startDate: getFormattedDate(0),
+        endDate: getFormattedDate(30),
+      }));
+    }
+  } catch (_error) {}
+
+  return getFallbackSearchTargets();
 };
 
 export const buildSearchUrl = ({ origin, destination, startDate, endDate }) => {
@@ -59,48 +77,39 @@ export const runPrefetchJob = async () => {
       throw new Error("API key not found.");
     }
 
-    let { origins, destinations } = await getTargetAirports();
-    origins = origins.join(",");
-    destinations = destinations.join(",");
-
-    const startDate = getFormattedDate(0);
-    const endDate = getFormattedDate(30);
-
-    const requestUrl = buildSearchUrl({
-      origin: origins,
-      destination: destinations,
-      startDate,
-      endDate,
-    });
-
-    const response = await fetch(requestUrl, {
-      method: "GET",
-      headers: {
-        Accept: "application/json",
-        "Partner-Authorization": apiKey,
-      },
-    });
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      throw new Error(`API request failed: ${data.message}`);
-    }
-
-    const flights = normalizeSeatsAeroResults(data);
     const flightsByKey = {};
     const cacheClient = await ensureRedisConnection();
+    const prefetchTargets = await getPrefetchTargets();
 
     if (!cacheClient) {
       throw new Error("REDIS_URL is not configured on the backend.");
     }
 
-    for (const flight of flights) {
-      const cacheKey = `search:${flight.depAirport}:${flight.arrAirport}:${flight.travelDate}`;
-      if (!flightsByKey[cacheKey]) {
-        flightsByKey[cacheKey] = [];
+    for (const prefetchTarget of prefetchTargets) {
+      const requestUrl = buildSearchUrl(prefetchTarget);
+      const response = await fetch(requestUrl, {
+        method: "GET",
+        headers: {
+          Accept: "application/json",
+          "Partner-Authorization": apiKey,
+        },
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(`API request failed: ${data.message}`);
       }
-      flightsByKey[cacheKey].push(flight);
+
+      const flights = normalizeSeatsAeroResults(data);
+
+      for (const flight of flights) {
+        const cacheKey = `search:${flight.depAirport}:${flight.arrAirport}:${flight.travelDate}`;
+        if (!flightsByKey[cacheKey]) {
+          flightsByKey[cacheKey] = [];
+        }
+        flightsByKey[cacheKey].push(flight);
+      }
     }
 
     for (const [key, flightsArray] of Object.entries(flightsByKey)) {

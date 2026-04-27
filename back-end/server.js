@@ -24,12 +24,15 @@ import { getSeatsAeroTripDetail, searchSeatsAeroFlights } from "./seatsAero.js";
 import { startPrefetchJob } from "./workers/prefetch.js";
 import { validateSearchParams } from "./seatsAero.js";
 import { isDatabaseConnected } from "./config/database.js";
+import { logSearchHistory } from "./repositories/searchRepository.js";
 
 const app = express();
 const port = 3000;
 const currentFilePath = fileURLToPath(import.meta.url);
 const isDirectExecution =
   process.argv[1] != null && path.resolve(process.argv[1]) === currentFilePath;
+const isTestRun =
+  process.env.NODE_ENV === "test" || process.env.npm_lifecycle_event === "test";
 
 app.use(cors({ origin: "http://localhost:5173" }));
 app.use(express.json());
@@ -47,6 +50,18 @@ app.get("/api/search/flights", async (req, res) => {
       destination,
       date,
     );
+
+    logSearchHistory({
+      origin: normalizedOrigin,
+      destination: normalizedDestination,
+      travelDate: date,
+      searchedAt: new Date(),
+    }).catch((error) => {
+      if (!isTestRun) {
+        console.error("Unable to persist search history:", error.message);
+      }
+    });
+
     const cacheKey = `search:${normalizedOrigin}:${normalizedDestination}:${date}`;
 
     try {
@@ -59,9 +74,7 @@ app.get("/api/search/flights", async (req, res) => {
           data: JSON.parse(cachedData),
         });
       }
-    } catch (_error) {
-      // Cache availability should not block live search results.
-    }
+    } catch (_error) {}
 
     const flights = await searchSeatsAeroFlights({
       origin: normalizedOrigin,
