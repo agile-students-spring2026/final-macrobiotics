@@ -197,9 +197,11 @@ describe("Prefetch Job", () => {
       global.fetch = async (url) => {
         fetchUrls.push(url);
 
+        const responseBody = fetchResponses.shift();
+
         return {
           ok: true,
-          json: async () => fetchResponses.shift(),
+          json: async () => responseBody,
         };
       };
 

@@ -95,12 +95,16 @@ export const runPrefetchJob = async () => {
         },
       });
 
-      const data = await response.json();
-
       if (!response.ok) {
-        throw new Error(`API request failed: ${data.message}`);
+        const errorMessage =
+          (await response.text()) || "Seats.aero prefetch request failed.";
+
+        console.error(errorMessage);
+
+        throw new Error(`API request failed: ${errorMessage}`);
       }
 
+      const data = await response.json();
       const flights = normalizeSeatsAeroResults(data);
 
       for (const flight of flights) {
