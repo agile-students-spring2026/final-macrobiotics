@@ -7,14 +7,20 @@ function LoginPage({ onGoBack }){
 
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState("");
 
     async function handleLogin(){
 
         if(!email || !password){
 
-            alert("Please enter email and password");
+            setError("Please enter email and password");
+            
             return;
         }
+
+        setLoading(true);
+        setError("");
 
         try {
             
@@ -28,7 +34,7 @@ function LoginPage({ onGoBack }){
 
             if (!response.ok) {
 
-                alert(result.message || "Login failed.");
+                setError(result.message || "Login failed.");
                 return
             }
 
@@ -44,7 +50,11 @@ function LoginPage({ onGoBack }){
 
         catch (error){
 
-            alert("Unable to reach server.");
+            setError("Unable to reach server.");
+
+        } finally{
+
+            setLoading(false);
         }
     }
 
@@ -52,7 +62,7 @@ function LoginPage({ onGoBack }){
 
         if(!email || !password){
 
-            alert("Please enter email and password");
+            setError("Please enter email and password");
             return;
         }
 
@@ -68,7 +78,7 @@ function LoginPage({ onGoBack }){
 
             if (!response.ok) {
 
-                alert(result.message || "Signup failed.");
+                setError(result.message || "Signup failed.");
                 return
             }
 
@@ -84,7 +94,12 @@ function LoginPage({ onGoBack }){
 
         catch (error){
 
-            alert("Unable to reach server.");
+            setError("Unable to reach server.");
+        }
+
+        finally{
+
+            setLoading(false);
         }
     }
 
@@ -102,6 +117,8 @@ function LoginPage({ onGoBack }){
                     </p>
                 </header>
 
+                {error && <p className ="login-error">{error}</p>}
+
                 <div className="details">
                     
                     <span>Email</span>
@@ -110,6 +127,7 @@ function LoginPage({ onGoBack }){
                         placeholder="youremail@example.com"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
+                        disabled={loading}
                     />
                 </div>
 
@@ -121,6 +139,7 @@ function LoginPage({ onGoBack }){
                         placeholder="xxxxxxxx"
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
+                        disabled={loading}
                     />
                 </div>
 
@@ -130,16 +149,19 @@ function LoginPage({ onGoBack }){
                         className="default-login-button"
                         type="button"
                         onClick={handleLogin}
+                        disabled={loading}
                     >
-                        Log In
+                        {loading ? "Please wait..." : "Log In"}
+
                     </button>
 
                     <button
                         className="sso-login-button"
                         type="button"
                         onClick={handleSignup}
+                        disabled={loading}
                     >
-                        Create Account
+                        {loading ? "Please wait..." : "Create Account"}
                     </button>
 
                 </div>
