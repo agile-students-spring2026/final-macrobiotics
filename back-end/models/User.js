@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import { bookmarkSchema } from "./Bookmark.js";
 
 export const DEFAULT_PREFERENCES = Object.freeze([
   { id: "airport", label: "Default Airport", value: "JFK" },
@@ -40,7 +41,7 @@ const userSchema = new mongoose.Schema(
       default: createDefaultPreferences,
     },
     bookmarks: {
-      type: [mongoose.Schema.Types.Mixed],
+      type: [bookmarkSchema],
       default: [],
     },
   },
