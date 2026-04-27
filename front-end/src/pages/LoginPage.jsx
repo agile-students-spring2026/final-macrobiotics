@@ -66,6 +66,9 @@ function LoginPage({ onGoBack }){
             return;
         }
 
+        setLoading(true);
+        setError("");
+
         try {
             
             const response = await apiClient("/api/signup", {
