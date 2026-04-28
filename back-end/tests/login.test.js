@@ -67,6 +67,20 @@ describe("Login API", () => {
         "Invalid email or password.",
       );
     });
+
+    it("returns 401 when the email does not exist", async () => {
+
+      const res = await request(app)
+
+        .post("/api/login")
+        .send({email: "noemail@example.com", password: "secret123" });
+
+      expect(res.status).to.equal(401);
+      expect(res.body).to.have.property(
+        "message", 
+        "Invalid email or password.");
+
+    })
   });
 
   describe("POST /api/signup", () => {
@@ -130,5 +144,19 @@ describe("Login API", () => {
         "An account with that email already exists.",
       );
     });
+
+    it("returns 400 when password length is too short", async () => {
+
+      const res = await request(app)
+        
+      .post("/api/signup")
+      .send({email: "test@example.com", password: "abcd"});
+
+      expect(res.status).to.equal(400);
+      expect(res.body).to.have.property(
+
+        "message",
+        "Password must be at least 6 characters long.");
+    })
   });
 });

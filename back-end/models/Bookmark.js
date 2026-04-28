@@ -1,6 +1,6 @@
 import mongoose from 'mongoose';
 
-const bookmarkSchema = new mongoose.Schema(
+export const bookmarkSchema = new mongoose.Schema(
     {
         id: { type: String, required: true, trim: true, unique: true},
         airline: { type: String, default: '' },

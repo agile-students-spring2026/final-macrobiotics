@@ -347,6 +347,14 @@ app.post("/api/bookmarks", requireAuth, async (req, res) => {
     });
   }
 
+  if (!bookmarkPayload.depAirport || !bookmarkPayload.arrAirport){
+
+    return res.status(400).json({
+
+      message: "depAirport and arrAirport are required.",
+    });
+  }
+
   if (!isDatabaseConnected()) {
     return res.status(503).json({
       message: "Database connection is required to save bookmarks.",
