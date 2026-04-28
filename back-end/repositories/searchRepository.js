@@ -10,6 +10,7 @@ const normalizeAirportCode = (value) =>
     .toUpperCase();
 
 export const logSearchHistory = async ({
+  userId = null,
   origin,
   destination,
   travelDate,
@@ -31,11 +32,39 @@ export const logSearchHistory = async ({
   }
 
   return SearchHistory.create({
+    userId: userId ?? null,
     origin: normalizedOrigin,
     destination: normalizedDestination,
     travelDate: String(travelDate).trim(),
     searchedAt,
   });
+};
+
+export const getUserSearchHistory = async (userId, { limit = 20 } = {}) => {
+  if (!isDatabaseConnected() || !userId) {
+    return [];
+  }
+
+  const safeLimit =
+    Number.isFinite(Number(limit)) && Number(limit) > 0 ? Number(limit) : 20;
+
+  const results = await SearchHistory.find({ userId })
+    .sort({ searchedAt: -1 })
+    .limit(safeLimit)
+    .lean();
+
+  return results.map((entry) => ({
+    origin: entry.origin,
+    destination: entry.destination,
+    travelDate: entry.travelDate,
+    searchedAt: entry.searchedAt,
+  }));
+};
+
+export const clearSearchHistory = async () => {
+  if (isDatabaseConnected()) {
+    await SearchHistory.deleteMany({});
+  }
 };
 
 export const getTopSearchedRoutes = async ({

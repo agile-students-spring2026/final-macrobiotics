@@ -2,6 +2,12 @@ import mongoose from "mongoose";
 
 const searchHistorySchema = new mongoose.Schema(
   {
+    userId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      default: null,
+      index: true,
+    },
     origin: {
       type: String,
       required: true,
