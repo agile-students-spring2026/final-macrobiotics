@@ -9,6 +9,7 @@ import {
   isValidEmail,
   isValidPassword,
   normalizeEmail,
+  optionalAuth,
   requireAuth,
   verifyPassword,
 } from "./auth.js";
@@ -24,7 +25,10 @@ import { getSeatsAeroTripDetail, searchSeatsAeroFlights } from "./seatsAero.js";
 import { startPrefetchJob } from "./workers/prefetch.js";
 import { validateSearchParams } from "./seatsAero.js";
 import { isDatabaseConnected } from "./config/database.js";
-import { logSearchHistory } from "./repositories/searchRepository.js";
+import {
+  getUserSearchHistory,
+  logSearchHistory,
+} from "./repositories/searchRepository.js";
 
 const app = express();
 const port = 3000;
@@ -42,7 +46,7 @@ app.get("/", (_req, res) => {
   res.send("API route reached successfully");
 });
 
-app.get("/api/search/flights", async (req, res) => {
+app.get("/api/search/flights", optionalAuth, async (req, res) => {
   try {
     const { origin, destination, date } = req.query;
     const { normalizedOrigin, normalizedDestination } = validateSearchParams(
@@ -52,6 +56,7 @@ app.get("/api/search/flights", async (req, res) => {
     );
 
     logSearchHistory({
+      userId: req.user?.id ?? null,
       origin: normalizedOrigin,
       destination: normalizedDestination,
       travelDate: date,
@@ -113,6 +118,21 @@ app.get(
     }
   },
 );
+
+app.get("/api/history", requireAuth, async (req, res) => {
+  try {
+    const limit = req.query.limit ? Number(req.query.limit) : 20;
+    const history = await getUserSearchHistory(req.user.id, { limit });
+    res.status(200).json({
+      message: "Search history retrieved successfully",
+      data: history,
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: error.message ?? "Unable to retrieve search history.",
+    });
+  }
+});
 
 app.post("/api/login", async (req, res) => {
   const email = normalizeEmail(req.body?.email);

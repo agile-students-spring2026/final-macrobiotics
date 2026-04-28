@@ -42,6 +42,25 @@ export const createAuthToken = (user) =>
     { expiresIn: JWT_EXPIRATION },
   );
 
+export const optionalAuth = async (req, _res, next) => {
+  const authorizationHeader = req.get("authorization");
+
+  if (!authorizationHeader?.startsWith("Bearer ")) {
+    return next();
+  }
+
+  try {
+    const token = authorizationHeader.slice("Bearer ".length).trim();
+    const payload = jwt.verify(token, getJwtSecret());
+    const user = await findUserById(payload.sub);
+    if (user) req.user = user;
+  } catch (_error) {
+    // Invalid token is silently ignored for optional auth
+  }
+
+  next();
+};
+
 export const requireAuth = async (req, res, next) => {
   const authorizationHeader = req.get("authorization");
 
