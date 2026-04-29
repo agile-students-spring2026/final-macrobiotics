@@ -1,7 +1,7 @@
 import { expect } from "chai";
 import request from "supertest";
 import app from "../server.js";
-import redisClient from "../config/redis.js";
+import redisClient, { ensureRedisConnection } from "../config/redis.js";
 
 function createJsonResponse(body, status = 200) {
   return {
@@ -11,6 +11,15 @@ function createJsonResponse(body, status = 200) {
       return body;
     },
   };
+}
+
+async function clearSearchCacheKey(origin, destination, date) {
+  try {
+    const cacheClient = await ensureRedisConnection();
+    if (cacheClient) {
+      await cacheClient.del(`search:${origin}:${destination}:${date}`);
+    }
+  } catch (_error) {}
 }
 
 describe("Search API", () => {
@@ -71,6 +80,7 @@ describe("Search API", () => {
 
     it("normalizes Seats.aero search results into the frontend flight shape", async () => {
       process.env.SEATS_AERO_API = "test-key";
+      await clearSearchCacheKey("JFK", "LHR", "2026-06-01");
       global.fetch = async () =>
         createJsonResponse({
           data: [
@@ -150,6 +160,7 @@ describe("Search API", () => {
 
     it("prefers AvailabilityTrips mileage and duration from the real Seats.aero cached-search shape", async () => {
       process.env.SEATS_AERO_API = "test-key";
+      await clearSearchCacheKey("JFK", "SFO", "2026-05-15");
       global.fetch = async () =>
         createJsonResponse({
           data: [

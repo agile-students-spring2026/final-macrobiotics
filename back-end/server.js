@@ -19,6 +19,7 @@ import {
   createUser,
   findUserByEmail,
   replaceUser,
+  addRecentSearch,
 } from "./repositories/userRepository.js";
 import User from "./models/User.js";
 import { getSeatsAeroTripDetail, searchSeatsAeroFlights } from "./seatsAero.js";
@@ -130,6 +131,46 @@ app.get("/api/history", requireAuth, async (req, res) => {
   } catch (error) {
     res.status(500).json({
       message: error.message ?? "Unable to retrieve search history.",
+    });
+  }
+});
+
+app.get("/api/recent-searches", requireAuth, (req, res) => {
+  res.status(200).json({
+    message: "Recent searches retrieved successfully",
+    data: req.user.recentSearches ?? [],
+  });
+});
+
+app.post("/api/recent-searches", requireAuth, async (req, res) => {
+  const { origin, destination, travelDate, searchedAt } = req.body ?? {};
+
+  if (!origin || !destination || !travelDate || !searchedAt) {
+    return res.status(400).json({
+      message: "origin, destination, travelDate, and searchedAt are required.",
+    });
+  }
+
+  try {
+    const updated = await addRecentSearch(req.user.id, {
+      origin: String(origin).trim().toUpperCase(),
+      destination: String(destination).trim().toUpperCase(),
+      travelDate: String(travelDate).trim(),
+      tripType: req.body.tripType ?? "One-way",
+      cabin: req.body.cabin ?? "Any Cabin",
+      preferredAirline: req.body.preferredAirline ?? "Any Airline",
+      travelers: Number(req.body.travelers) || 1,
+      milesRange: req.body.milesRange ?? "Any",
+      searchedAt: String(searchedAt).trim(),
+    });
+
+    res.status(200).json({
+      message: "Recent search saved successfully",
+      data: updated.recentSearches,
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: error.message ?? "Unable to save recent search.",
     });
   }
 });
@@ -367,10 +408,8 @@ app.post("/api/bookmarks", requireAuth, async (req, res) => {
     });
   }
 
-  if (!bookmarkPayload.depAirport || !bookmarkPayload.arrAirport){
-
+  if (!bookmarkPayload.depAirport || !bookmarkPayload.arrAirport) {
     return res.status(400).json({
-
       message: "depAirport and arrAirport are required.",
     });
   }

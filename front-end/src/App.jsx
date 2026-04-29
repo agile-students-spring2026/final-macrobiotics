@@ -2,7 +2,6 @@ import { useMemo, useState } from "react";
 import AppFrame from "./components/AppFrame";
 import { hasAuthToken } from "./api/authToken";
 import { apiClient } from "./api/apiClient";
-import { saveRecentSearch } from "./utils/recentSearches";
 import BookmarksPage from "./pages/BookmarksPage";
 import HistoryPage from "./pages/HistoryPage";
 import IntroPage from "./pages/IntroPage";
@@ -100,12 +99,6 @@ function App() {
     const normalizedFrom = (criteria.from ?? "").trim().toUpperCase();
     const normalizedTo = (criteria.to ?? "").trim().toUpperCase();
     const date = criteria.date ?? "";
-    const nextSearchContext = {
-      classType: criteria.classType ?? "",
-      airlines: criteria.airlines ?? "",
-      miles: criteria.miles ?? "",
-      travelers: criteria.travelers ?? "1",
-    };
 
     setSearchFormValues({ from: normalizedFrom, to: normalizedTo, date });
     setSelectedFlight(null);
@@ -118,7 +111,10 @@ function App() {
       setSearchFlights([]);
       setHasSearched(false);
       setSearchLoadError("Origin, destination, and date are required.");
-      return;
+      return {
+        ok: false,
+        error: "Origin, destination, and date are required.",
+      };
     }
 
     setIsSearchLoading(true);
@@ -146,26 +142,14 @@ function App() {
         Array.isArray(responseJson.data) ? responseJson.data : [],
       );
       setSearchLoadError("");
-      saveRecentSearch({
-        origin: normalizedFrom,
-        destination: normalizedTo,
-        travelDate: date,
-        tripType: "One-way",
-        cabin: nextSearchContext.classType
-          ? nextSearchContext.classType
-              .split("-")
-              .map(
-                (segment) => segment.charAt(0).toUpperCase() + segment.slice(1),
-              )
-              .join(" ")
-          : "Any Cabin",
-        preferredAirline: nextSearchContext.airlines || "Any Airline",
-        travelers: nextSearchContext.travelers || 1,
-        milesRange: nextSearchContext.miles || "Any",
-      });
+      return { ok: true };
     } catch (error) {
       setSearchFlights([]);
       setSearchLoadError(error.message || "Unable to load search results.");
+      return {
+        ok: false,
+        error: error.message || "Unable to load search results.",
+      };
     } finally {
       setIsSearchLoading(false);
     }

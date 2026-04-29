@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
-import { loadRecentSearches } from "../utils/recentSearches";
+import { apiClient } from "../api/apiClient";
+import { loadRecentSearches, saveRecentSearch } from "../utils/recentSearches";
 
 const ACCOUNT_ACTIONS = [
   { id: "signup", label: "Sign up" },
@@ -41,15 +42,28 @@ function IntroPage({ isAuthenticated, onNavigateScreen, onStartSearch }) {
   });
 
   useEffect(() => {
-    setRecentSearches(loadRecentSearches().slice(0, 4));
-  }, []);
+    if (isAuthenticated) {
+      apiClient("/api/recent-searches")
+        .then((res) => res.json())
+        .then((json) => {
+          if (Array.isArray(json.data)) {
+            setRecentSearches(json.data);
+          }
+        })
+        .catch(() => {
+          setRecentSearches(loadRecentSearches());
+        });
+      return;
+    }
+
+    setRecentSearches(loadRecentSearches());
+  }, [isAuthenticated]);
 
   function handleFieldChange(event) {
     const { name, value } = event.target;
     setFormValues((currentValues) => ({
       ...currentValues,
-      [name]:
-        name === "from" || name === "to" ? value.toUpperCase() : value,
+      [name]: name === "from" || name === "to" ? value.toUpperCase() : value,
     }));
   }
 
@@ -74,13 +88,52 @@ function IntroPage({ isAuthenticated, onNavigateScreen, onStartSearch }) {
     dateInputRef.current.focus();
   }
 
-  function handleSearchClick() {
+  async function persistRecentSearch(criteria) {
+    const searchEntry = {
+      origin: (criteria.from ?? "").trim().toUpperCase(),
+      destination: (criteria.to ?? "").trim().toUpperCase(),
+      travelDate: criteria.date ?? "",
+      tripType: "One-way",
+      cabin: criteria.classType
+        ? criteria.classType
+            .split("-")
+            .map(
+              (segment) => segment.charAt(0).toUpperCase() + segment.slice(1),
+            )
+            .join(" ")
+        : "Any Cabin",
+      preferredAirline: criteria.airlines || "Any Airline",
+      travelers: criteria.travelers || 1,
+      milesRange: criteria.miles || "Any",
+      searchedAt: new Date().toISOString().slice(0, 10),
+    };
+
+    const nextLocalRecentSearches = saveRecentSearch(searchEntry);
+    setRecentSearches(nextLocalRecentSearches);
+
+    if (!isAuthenticated) {
+      return;
+    }
+
+    try {
+      const response = await apiClient("/api/recent-searches", {
+        method: "POST",
+        body: JSON.stringify(searchEntry),
+      });
+      const responseJson = await response.json();
+      if (response.ok && Array.isArray(responseJson.data)) {
+        setRecentSearches(responseJson.data);
+      }
+    } catch (_error) {}
+  }
+
+  async function handleSearchClick() {
     if (!onStartSearch) {
       onNavigateScreen && onNavigateScreen("search-results");
       return;
     }
 
-    onStartSearch({
+    const criteria = {
       from: formValues.from.trim().toUpperCase(),
       to: formValues.to.trim().toUpperCase(),
       date: formValues.date,
@@ -88,16 +141,28 @@ function IntroPage({ isAuthenticated, onNavigateScreen, onStartSearch }) {
       airlines: formValues.airlines,
       miles: formValues.miles,
       travelers: formValues.travelers,
-    });
+    };
+
+    const result = await onStartSearch(criteria);
+
+    if (result?.ok) {
+      await persistRecentSearch(criteria);
+    }
   }
 
-  function handleRecentSearchClick(search) {
+  async function handleRecentSearchClick(search) {
     const nextFormValues = {
       from: search.origin,
       to: search.destination,
-      classType: search.cabin === "Any Cabin" ? "" : search.cabin.toLowerCase().replace(/\s+/g, "-"),
+      classType:
+        search.cabin === "Any Cabin"
+          ? ""
+          : search.cabin.toLowerCase().replace(/\s+/g, "-"),
       date: search.travelDate,
-      airlines: search.preferredAirline === "Any Airline" ? "" : search.preferredAirline,
+      airlines:
+        search.preferredAirline === "Any Airline"
+          ? ""
+          : search.preferredAirline,
       miles: search.milesRange === "Any" ? "" : search.milesRange,
       travelers: String(search.travelers || 1),
     };
@@ -109,7 +174,11 @@ function IntroPage({ isAuthenticated, onNavigateScreen, onStartSearch }) {
       return;
     }
 
-    onStartSearch(nextFormValues);
+    const result = await onStartSearch(nextFormValues);
+
+    if (result?.ok) {
+      await persistRecentSearch(nextFormValues);
+    }
   }
 
   return (
@@ -269,9 +338,12 @@ function IntroPage({ isAuthenticated, onNavigateScreen, onStartSearch }) {
             <div className="intro-advanced">
               <h3 className="intro-advanced__title">Recent Searches</h3>
               <div className="intro-recent-searches">
-                {recentSearches.map((search) => (
+                {recentSearches.slice(0, 4).map((search) => (
                   <button
-                    key={search.id}
+                    key={
+                      search.id ??
+                      `${search.origin}-${search.destination}-${search.travelDate}-${search.searchedAt}`
+                    }
                     type="button"
                     className="intro-recent-searches__item"
                     onClick={() => handleRecentSearchClick(search)}
