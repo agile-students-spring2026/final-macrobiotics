@@ -95,6 +95,53 @@ The backend currently allows browser requests from `http://localhost:5173`. If V
 
 Both servers need to run at the same time for login, signup, search, bookmarks, and settings to work.
 
+## Run with Docker
+
+Docker Compose can run the frontend, backend, MongoDB, and Redis together in Linux containers.
+
+1. Copy the Docker environment template:
+
+```bash
+cp .env.docker.example .env.docker
+```
+
+On Windows PowerShell:
+
+```powershell
+Copy-Item .env.docker.example .env.docker
+```
+
+2. Edit `.env.docker` and set real values for:
+
+```env
+SEATS_AERO_API=your_partner_api_key_here
+JWT_SECRET=replace_with_a_long_random_secret
+```
+
+3. Build and start the full stack:
+
+```bash
+docker compose --env-file .env.docker up --build
+```
+
+4. Open the app at `http://localhost:8080`.
+
+The backend is also exposed at `http://localhost:3000`, MongoDB at `localhost:27017`, and Redis at `localhost:6379`.
+
+Useful Docker commands:
+
+```bash
+docker compose --env-file .env.docker ps
+docker compose --env-file .env.docker logs -f backend
+docker compose --env-file .env.docker down
+```
+
+To remove the MongoDB and Redis Docker volumes as well:
+
+```bash
+docker compose --env-file .env.docker down -v
+```
+
 ## Test and Build
 
 Run backend tests:

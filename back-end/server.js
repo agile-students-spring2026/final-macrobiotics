@@ -32,14 +32,18 @@ import {
 } from "./repositories/searchRepository.js";
 
 const app = express();
-const port = 3000;
+const port = Number(process.env.PORT) || 3000;
 const currentFilePath = fileURLToPath(import.meta.url);
 const isDirectExecution =
   process.argv[1] != null && path.resolve(process.argv[1]) === currentFilePath;
 const isTestRun =
   process.env.NODE_ENV === "test" || process.env.npm_lifecycle_event === "test";
+const allowedOrigins = (process.env.CORS_ORIGIN || "http://localhost:5173")
+  .split(",")
+  .map((origin) => origin.trim())
+  .filter(Boolean);
 
-app.use(cors({ origin: "http://localhost:5173" }));
+app.use(cors({ origin: allowedOrigins }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
