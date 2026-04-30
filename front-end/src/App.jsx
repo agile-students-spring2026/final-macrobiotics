@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import AppFrame from "./components/AppFrame";
 import { hasAuthToken } from "./api/authToken";
+import { apiClient } from "./api/apiClient";
 import BookmarksPage from "./pages/BookmarksPage";
 import HistoryPage from "./pages/HistoryPage";
 import IntroPage from "./pages/IntroPage";
@@ -31,7 +32,15 @@ function App() {
   const [activeScreen, setActiveScreen] = useState("intro");
   const [navigationHistory, setNavigationHistory] = useState([]);
   const [selectedFlight, setSelectedFlight] = useState(null);
-  const [searchRequest, setSearchRequest] = useState(null);
+  const [searchFlights, setSearchFlights] = useState([]);
+  const [isSearchLoading, setIsSearchLoading] = useState(false);
+  const [searchLoadError, setSearchLoadError] = useState("");
+  const [hasSearched, setHasSearched] = useState(false);
+  const [searchFormValues, setSearchFormValues] = useState({
+    from: "",
+    to: "",
+    date: "",
+  });
   const isAuthenticated = hasAuthToken();
 
   const screens = useMemo(() => {
@@ -52,7 +61,10 @@ function App() {
       nextScreen === "login" && isAuthenticated ? "settings" : nextScreen;
 
     if (resolvedScreen === "settings" && !isAuthenticated) {
-      setNavigationHistory((currentHistory) => [...currentHistory, activeScreen]);
+      setNavigationHistory((currentHistory) => [
+        ...currentHistory,
+        activeScreen,
+      ]);
       setActiveScreen("login");
       return;
     }
@@ -83,15 +95,63 @@ function App() {
     handleNavigateScreen("search-detail");
   };
 
-  function handleStartSearch(searchCriteria) {
-    setSearchRequest({
-      requestId: Date.now(),
-      ...searchCriteria,
-    });
+  async function handleStartSearch(criteria) {
+    const normalizedFrom = (criteria.from ?? "").trim().toUpperCase();
+    const normalizedTo = (criteria.to ?? "").trim().toUpperCase();
+    const date = criteria.date ?? "";
+
+    setSearchFormValues({ from: normalizedFrom, to: normalizedTo, date });
     setSelectedFlight(null);
 
     if (activeScreen !== "search-results") {
       handleNavigateScreen("search-results");
+    }
+
+    if (!normalizedFrom || !normalizedTo || !date) {
+      setSearchFlights([]);
+      setHasSearched(false);
+      setSearchLoadError("Origin, destination, and date are required.");
+      return {
+        ok: false,
+        error: "Origin, destination, and date are required.",
+      };
+    }
+
+    setIsSearchLoading(true);
+    setHasSearched(true);
+    setSearchLoadError("");
+
+    try {
+      const queryParams = new URLSearchParams({
+        origin: normalizedFrom,
+        destination: normalizedTo,
+        date,
+      });
+      const response = await apiClient(
+        `/api/search/flights?${queryParams.toString()}`,
+      );
+      const responseJson = await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          responseJson.message || "Unable to load search results.",
+        );
+      }
+
+      setSearchFlights(
+        Array.isArray(responseJson.data) ? responseJson.data : [],
+      );
+      setSearchLoadError("");
+      return { ok: true };
+    } catch (error) {
+      setSearchFlights([]);
+      setSearchLoadError(error.message || "Unable to load search results.");
+      return {
+        ok: false,
+        error: error.message || "Unable to load search results.",
+      };
+    } finally {
+      setIsSearchLoading(false);
     }
   }
 
@@ -108,7 +168,11 @@ function App() {
         onGoBack={handleGoBack}
         onSelectFlight={handleSelectFlight}
         onStartSearch={handleStartSearch}
-        searchRequest={searchRequest}
+        flights={searchFlights}
+        isLoading={isSearchLoading}
+        loadError={searchLoadError}
+        hasSearched={hasSearched}
+        searchFormValues={searchFormValues}
         flight={selectedFlight}
       />
     </AppFrame>

@@ -6,6 +6,27 @@ const memoryUsers = new Map();
 
 const cloneValue = (value) => JSON.parse(JSON.stringify(value));
 
+const MAX_RECENT_SEARCHES = 10;
+
+const recentSearchDedupeKey = (s) =>
+  [
+    s.origin,
+    s.destination,
+    s.travelDate,
+    s.cabin,
+    s.preferredAirline,
+    s.travelers,
+    s.milesRange,
+  ].join("|");
+
+const buildRecentSearches = (current, newSearch) => {
+  const key = recentSearchDedupeKey(newSearch);
+  return [
+    newSearch,
+    ...current.filter((s) => recentSearchDedupeKey(s) !== key),
+  ].slice(0, MAX_RECENT_SEARCHES);
+};
+
 const toUserRecord = (user) => {
   if (!user) {
     return null;
@@ -17,8 +38,11 @@ const toUserRecord = (user) => {
     id: String(plainUser._id ?? plainUser.id),
     email: plainUser.email,
     passwordHash: plainUser.passwordHash,
-    preferences: cloneValue(plainUser.preferences ?? createDefaultPreferences()),
+    preferences: cloneValue(
+      plainUser.preferences ?? createDefaultPreferences(),
+    ),
     bookmarks: cloneValue(plainUser.bookmarks ?? []),
+    recentSearches: cloneValue(plainUser.recentSearches ?? []),
   };
 };
 
@@ -55,6 +79,7 @@ export const createUser = async ({ email, passwordHash }) => {
       passwordHash,
       preferences: createDefaultPreferences(),
       bookmarks: [],
+      recentSearches: [],
     });
 
     return toUserRecord(createdUser);
@@ -66,6 +91,7 @@ export const createUser = async ({ email, passwordHash }) => {
     passwordHash,
     preferences: createDefaultPreferences(),
     bookmarks: [],
+    recentSearches: [],
   });
 };
 
@@ -78,6 +104,7 @@ export const replaceUser = async (user) => {
         passwordHash: user.passwordHash,
         preferences: cloneValue(user.preferences ?? []),
         bookmarks: cloneValue(user.bookmarks ?? []),
+        recentSearches: cloneValue(user.recentSearches ?? []),
       },
       {
         new: true,
@@ -89,6 +116,26 @@ export const replaceUser = async (user) => {
   }
 
   return saveMemoryUser(user);
+};
+
+export const addRecentSearch = async (userId, search) => {
+  if (!isDatabaseConnected()) {
+    const user = memoryUsers.get(userId);
+    if (!user) return null;
+    const next = buildRecentSearches(user.recentSearches ?? [], search);
+    return saveMemoryUser({ ...user, recentSearches: next });
+  }
+
+  const user = await User.findById(userId);
+  if (!user) return null;
+  const next = buildRecentSearches(user.recentSearches ?? [], search);
+  return toUserRecord(
+    await User.findByIdAndUpdate(
+      userId,
+      { $set: { recentSearches: next } },
+      { new: true, runValidators: true },
+    ),
+  );
 };
 
 export const clearUsers = async () => {
