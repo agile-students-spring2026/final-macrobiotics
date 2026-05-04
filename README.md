@@ -97,50 +97,143 @@ Both servers need to run at the same time for login, signup, search, bookmarks, 
 
 ## Run with Docker
 
-Docker Compose can run the frontend, backend, MongoDB, and Redis together in Linux containers.
+Docker Compose can run the frontend and backend together in Linux containers. MongoDB and Redis are expected to run externally, using the same connection strings as the non-Docker setup.
 
-1. Copy the Docker environment template:
+1. Install Docker and Docker Compose.
+
+On Docker Desktop, Compose is included. On Ubuntu, install Docker and the Compose plugin:
 
 ```bash
-cp .env.docker.example .env.docker
+sudo apt update
+sudo apt install -y docker.io docker-compose-plugin
+sudo systemctl enable --now docker
 ```
 
-On Windows PowerShell:
+2. Copy the environment template:
 
-```powershell
-Copy-Item .env.docker.example .env.docker
+```bash
+cp .env.docker.example .env
 ```
 
-2. Edit `.env.docker` and set real values for:
+3. Edit `.env` and set real values for:
 
 ```env
 SEATS_AERO_API=your_partner_api_key_here
 JWT_SECRET=replace_with_a_long_random_secret
+MONGO_URI=your_external_mongodb_connection_string
+REDIS_URL=your_external_redis_connection_string
+CORS_ORIGIN=http://localhost:8080
 ```
 
-3. Build and start the full stack:
+4. Build and start the full stack:
 
 ```bash
-docker compose --env-file .env.docker up --build
+docker-compose up --build -d
 ```
 
-4. Open the app at `http://localhost:8080`.
+If your machine has the modern Docker Compose plugin, this also works:
 
-The backend is also exposed at `http://localhost:3000`, MongoDB at `localhost:27017`, and Redis at `localhost:6379`.
+```bash
+docker compose up --build -d
+```
+
+5. Open the app at `http://localhost:8080`.
+
+The backend is also exposed at `http://localhost:3000`.
 
 Useful Docker commands:
 
 ```bash
-docker compose --env-file .env.docker ps
-docker compose --env-file .env.docker logs -f backend
-docker compose --env-file .env.docker down
+docker-compose ps
+docker-compose logs -f backend
+docker-compose down
 ```
 
-To remove the MongoDB and Redis Docker volumes as well:
+## Deploy on DigitalOcean
+
+These steps deploy the Docker Compose stack to a single DigitalOcean Droplet.
+
+1. Create a Droplet using Ubuntu or DigitalOcean's Docker image.
+2. Add inbound firewall rules for:
+   - SSH on TCP `22`
+   - the web app on TCP `8080`
+3. SSH into the Droplet:
 
 ```bash
-docker compose --env-file .env.docker down -v
+ssh root@your_droplet_ip
 ```
+
+4. Clone the repository and switch to the Docker branch:
+
+```bash
+git clone https://github.com/agile-students-spring2026/final-macrobiotics.git
+cd final-macrobiotics
+git checkout docker
+```
+
+5. If Docker Compose is not already installed, install it:
+
+```bash
+sudo apt update
+sudo apt install -y docker.io docker-compose-plugin
+sudo systemctl enable --now docker
+```
+
+These instructions use `docker-compose`, which is available on many DigitalOcean Docker images. If `docker-compose version` does not work, install the Compose plugin above and use `docker compose` instead.
+
+6. Create the production env file:
+
+```bash
+cp .env.docker.example .env
+nano .env
+```
+
+Set:
+
+```env
+SEATS_AERO_API=your_real_partner_api_key
+JWT_SECRET=replace_with_a_long_random_secret
+MONGO_URI=your_external_mongodb_connection_string
+REDIS_URL=your_external_redis_connection_string
+CORS_ORIGIN=http://your_droplet_ip:8080
+```
+
+Save and exit nano with `Ctrl+O`, `Enter`, then `Ctrl+X`.
+
+7. Start the app:
+
+```bash
+docker-compose up --build -d
+```
+
+8. Check the containers:
+
+```bash
+docker-compose ps
+```
+
+Expected ports:
+
+```text
+frontend   0.0.0.0:8080->80/tcp
+backend    0.0.0.0:3000->3000/tcp
+```
+
+9. Open the app:
+
+```text
+http://your_droplet_ip:8080
+```
+
+If the page does not load, verify the container and firewall:
+
+```bash
+docker-compose ps
+sudo ss -tulpn | grep 8080
+curl -I http://localhost:8080
+```
+
+If the backend is unhealthy, confirm the Droplet can reach the external MongoDB and Redis endpoints configured in `.env`.
 
 ## Test and Build
 
