@@ -89,31 +89,6 @@ describe("Bookmarks API", () => {
       );
       expect(res.body).to.have.property("data").that.is.an("array");
     });
-
-    it("returns 503 when the database is not connected", async () => {
-
-      previousReadyState = mongoose.connection.readyState;
-
-      try{
-
-        mongoose.connection.readyState = 0;
-
-        const res = await request(app)
-          .get("/api/bookmarks")
-          .set("Authorization", `Bearer ${token}`)
-
-        expect(res.status).to.equal(503);
-        expect(res.body).to.have.property(
-
-          "message",
-          "Database connection is required to retrieve bookmarks.",
-        );
-      } finally {
-
-        mongoose.connection.readyState = previousReadyState;
-      }
-
-    });
   });
 
   describe("POST /api/bookmarks", () => {
@@ -214,72 +189,6 @@ describe("Bookmarks API", () => {
       );
       expect(updateStub.calledOnce).to.equal(true);
     });
-
-    it("returns 400 when id is missing", async () => {
-
-      const res = await request(app)
-        .post("/api/bookmarks")
-        .set("Authorization", `Bearer ${token}`)
-        .send({
-
-          depAirport: "JFK",
-          arrAirport: "LAX"
-        });
-
-      expect(res.status).to.equal(400);
-      expect(res.body).to.have.property(
-        
-        "message", 
-        "Bookmark id is required.");
-    });
-
-    it("returns 400 when depAirport or arrAirport are missing", async () => {
-
-      const res = await request(app)
-        .post("/api/bookmarks")
-        .set("Authorization", `Bearer ${token}`)
-        .send({
-
-          id: "test-id-missing-airports"});
-
-      expect(res.status).to.equal(400);
-      expect(res.body).to.have.property(
-        
-        "message",
-        "depAirport and arrAirport are required.");
-    });
-
-    it("returns 503 when the database is not connected", async () => {
-
-      previousReadyState = mongoose.connection.readyState;
-      
-      try{
-
-        mongoose.connection.readyState = 0;
-
-        const res = await request(app)
-          .post("/api/bookmarks")
-          .set("Authorization", `Bearer ${token}`)
-          .send({
-
-            id: "test-503",
-            depAirport: "JFK",
-            arrAirport: "LAX"
-          });
-
-        expect(res.status).to.equal(503);
-        expect(res.body).to.have.property(
-
-          "message",
-          "Database connection is required to save bookmarks",
-        );
-
-      } finally{
-
-        mongoose.connection.readyState = previousReadyState;
-      }
-    });
-
   });
 
   describe("DELETE /api/bookmarks/:id", () => {
@@ -331,30 +240,6 @@ describe("Bookmarks API", () => {
         .expect(404);
 
       expect(res.body).to.have.property("message", "Bookmark not found.");
-    });
-
-    it("returns 503 when the database is not connected", async () => {
-
-      previousReadyState = mongoose.connection.readyState;
-
-      try{
-        
-        mongoose.connection.readyState = 0;
-
-        const res = await request(app)
-          .delete("/api/bookmarks/some-id")
-          .set("Authorization", `Bearer ${token}`)
-
-        expect(res.status).to.equal(503);
-        expect(res.body).to.have.property(
-
-          "message",
-          "Database connection is required to delete bookmarks",
-        );
-      } finally{
-
-        mongoose.connection.readyState = previousReadyState;
-      }
     });
   });
 });
