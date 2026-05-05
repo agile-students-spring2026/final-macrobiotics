@@ -17,7 +17,7 @@ The app is split into two npm projects:
 
 ## Deployment Link 
 
-The deployed web application can be accessed at the following link: [Miely](http://142.93.49.130:8080/)
+The deployed web application can be accessed at the following link: [Miley](http://142.93.49.130:8080/)
 
 ## Environment Variables
 
