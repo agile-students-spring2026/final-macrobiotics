@@ -84,7 +84,13 @@ app.get("/api/search/flights", optionalAuth, async (req, res) => {
           data: JSON.parse(cachedData),
         });
       }
-    } catch (_error) {}
+    } catch (error) {
+
+        if (!isTestRun) {
+
+          console.warn("Redis cache unavailable", error.message);
+        }
+    }
 
     const flights = await searchSeatsAeroFlights({
       origin: normalizedOrigin,
@@ -388,17 +394,27 @@ app.put("/api/settings/preferences", requireAuth, async (req, res) => {
     };
   });
 
-  const updatedUser = await replaceUser({
+  try{
+
+    const updatedUser = await replaceUser({
     ...req.user,
     preferences: updatedPreferences,
-  });
+    });
 
-  req.user = updatedUser;
-
-  res.status(200).json({
+    res.status(200).json({
     message: "Preferences updated successfully.",
     data: updatedUser.preferences,
-  });
+    });
+
+  } catch (error) {
+
+    res.status(500).json({
+
+      message: error.message ?? "Unable to update preferences.",
+    });
+
+  }
+
 });
 
 app.get("/api/bookmarks", requireAuth, async (req, res) => {
