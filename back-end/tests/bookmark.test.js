@@ -93,20 +93,26 @@ describe("Bookmarks API", () => {
     it("returns 503 when the database is not connected", async () => {
 
       previousReadyState = mongoose.connection.readyState;
-      mongoose.connection.readyState = 0;
 
-      const res = await request(app)
-        .get("/api/bookmarks")
-        .set("Authorization", `Bearer ${token}`)
-      
-      mongoose.connection.readyState = previousReadyState;
+      try{
 
-      expect(res.status).to.equal(503);
-      expect(res.body).to.have.property(
+        mongoose.connection.readyState = 0;
 
-        "message",
-        "Database connection is required to retrieve bookmarks",
-      );
+        const res = await request(app)
+          .get("/api/bookmarks")
+          .set("Authorization", `Bearer ${token}`)
+
+        expect(res.status).to.equal(503);
+        expect(res.body).to.have.property(
+
+          "message",
+          "Database connection is required to retrieve bookmarks.",
+        );
+      } finally {
+
+        mongoose.connection.readyState = previousReadyState;
+      }
+
     });
   });
 
@@ -246,26 +252,32 @@ describe("Bookmarks API", () => {
     it("returns 503 when the database is not connected", async () => {
 
       previousReadyState = mongoose.connection.readyState;
-      mongoose.connection.readyState = 0;
-
-      const res = await request(app)
-        .post("/api/bookmarks")
-        .set("Authorization", `Bearer ${token}`)
-        .send({
-
-          id: "test-503",
-          depAirport: "JFK",
-          arrAirport: "LAX"
-        });
       
-      mongoose.connection.readyState = previousReadyState;
+      try{
 
-      expect(res.status).to.equal(503);
-      expect(res.body).to.have.property(
+        mongoose.connection.readyState = 0;
 
-        "message",
-        "Database connection is required to save bookmarks",
-      );
+        const res = await request(app)
+          .post("/api/bookmarks")
+          .set("Authorization", `Bearer ${token}`)
+          .send({
+
+            id: "test-503",
+            depAirport: "JFK",
+            arrAirport: "LAX"
+          });
+
+        expect(res.status).to.equal(503);
+        expect(res.body).to.have.property(
+
+          "message",
+          "Database connection is required to save bookmarks",
+        );
+
+      } finally{
+
+        mongoose.connection.readyState = previousReadyState;
+      }
     });
 
   });
@@ -324,20 +336,25 @@ describe("Bookmarks API", () => {
     it("returns 503 when the database is not connected", async () => {
 
       previousReadyState = mongoose.connection.readyState;
-      mongoose.connection.readyState = 0;
 
-      const res = await request(app)
-        .delete("/api/bookmarks/some-id")
-        .set("Authorization", `Bearer ${token}`)
-      
-      mongoose.connection.readyState = previousReadyState;
+      try{
+        
+        mongoose.connection.readyState = 0;
 
-      expect(res.status).to.equal(503);
-      expect(res.body).to.have.property(
+        const res = await request(app)
+          .delete("/api/bookmarks/some-id")
+          .set("Authorization", `Bearer ${token}`)
 
-        "message",
-        "Database connection is required to delete bookmarks",
-      );
+        expect(res.status).to.equal(503);
+        expect(res.body).to.have.property(
+
+          "message",
+          "Database connection is required to delete bookmarks",
+        );
+      } finally{
+
+        mongoose.connection.readyState = previousReadyState;
+      }
     });
   });
 });
