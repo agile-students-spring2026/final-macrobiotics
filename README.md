@@ -15,6 +15,10 @@ The app is split into two npm projects:
 - A Seats.aero partner API key for live flight search.
 - Optional: Redis, if you want search result caching and the prefetch worker to persist cached results.
 
+## Deployment Link 
+
+The deployed web application can be accessed at the following link: [Miely](http://142.93.49.130:8080/)
+
 ## Environment Variables
 
 Create a `.env` file in the repository root. The backend loads environment variables from `back-end/.env` or the root `.env`; keeping one root file is the simplest setup.
