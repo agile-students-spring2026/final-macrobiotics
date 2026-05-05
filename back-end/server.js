@@ -84,7 +84,13 @@ app.get("/api/search/flights", optionalAuth, async (req, res) => {
           data: JSON.parse(cachedData),
         });
       }
-    } catch (_error) {}
+    } catch (error) {
+
+        if (!isTestRun) {
+
+          console.warn("Redis cache unavailable", error.message);
+        }
+    }
 
     const flights = await searchSeatsAeroFlights({
       origin: normalizedOrigin,
@@ -291,27 +297,36 @@ app.put("/api/settings/email", requireAuth, async (req, res) => {
     });
   }
 
-  const existingUser = await findUserByEmail(newEmail);
+  try{
+    const existingUser = await findUserByEmail(newEmail);
 
-  if (existingUser && existingUser.id !== req.user.id) {
-    return res.status(409).json({
-      message: "An account with that email already exists.",
+    if (existingUser && existingUser.id !== req.user.id) {
+      return res.status(409).json({
+        message: "An account with that email already exists.",
+      });
+    }
+
+    const updatedUser = await replaceUser({
+      ...req.user,
+      email: newEmail,
     });
+
+    req.user = updatedUser;
+
+    res.status(200).json({
+      message: "Email updated successfully.",
+      data: {
+        email: updatedUser.email,
+      },
+    });
+    
+  } catch (error) {
+
+      res.status(500).json({
+
+        message: error.message ?? "Unable to update email.",
+      });
   }
-
-  const updatedUser = await replaceUser({
-    ...req.user,
-    email: newEmail,
-  });
-
-  req.user = updatedUser;
-
-  res.status(200).json({
-    message: "Email updated successfully.",
-    data: {
-      email: updatedUser.email,
-    },
-  });
 });
 
 app.put("/api/settings/password", requireAuth, async (req, res) => {
@@ -335,7 +350,9 @@ app.put("/api/settings/password", requireAuth, async (req, res) => {
     });
   }
 
-  const updatedUser = await replaceUser({
+  try{
+
+    const updatedUser = await replaceUser({
     ...req.user,
     passwordHash: await hashPassword(newPassword),
   });
@@ -343,6 +360,14 @@ app.put("/api/settings/password", requireAuth, async (req, res) => {
   req.user = updatedUser;
 
   res.status(200).json({ message: "Password updated successfully." });
+
+} catch (error) {
+
+    res.status(500).json({
+
+      message: error.message ?? "Unable to update password.",
+    });
+}
 });
 
 app.put("/api/settings/preferences", requireAuth, async (req, res) => {
@@ -369,17 +394,27 @@ app.put("/api/settings/preferences", requireAuth, async (req, res) => {
     };
   });
 
-  const updatedUser = await replaceUser({
+  try{
+
+    const updatedUser = await replaceUser({
     ...req.user,
     preferences: updatedPreferences,
-  });
+    });
 
-  req.user = updatedUser;
-
-  res.status(200).json({
+    res.status(200).json({
     message: "Preferences updated successfully.",
     data: updatedUser.preferences,
-  });
+    });
+
+  } catch (error) {
+
+    res.status(500).json({
+
+      message: error.message ?? "Unable to update preferences.",
+    });
+
+  }
+
 });
 
 app.get("/api/bookmarks", requireAuth, async (req, res) => {
