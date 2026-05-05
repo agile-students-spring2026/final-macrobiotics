@@ -158,5 +158,23 @@ describe("Login API", () => {
         "message",
         "Password must be at least 6 characters long.");
     })
+
+    it("returns 400 when email format is invalid", async () => {
+
+      const res = await request(app)
+        .post("/api/signup")
+        .send({
+
+          email: "invalidemail",
+          password: "password123"
+        });
+
+      expect(res.status).to.equal(400);
+      expect(res.body).to.have.property(
+
+        "message",
+        "A valid email address is required.",
+      );
+    });
   });
 });

@@ -100,6 +100,33 @@ describe("Settings API", () => {
         "previousEmail does not match the current account.",
       );
     });
+
+    it("returns 409 when the new email is already taken by another account", async () =>{
+
+      await signupAndGetToken({
+
+        email: "alreadyregistered@example.com",
+        password: "password123",
+      });
+
+      const res = await request(app)
+        .put("/api/settings/email")
+        .set("Authorization", `Bearer ${token}`)
+        .send({
+
+          previousEmail: "settings@example.com",
+          newEmail: "alreadyregistered@example.com",
+        });
+
+      expect(res.status).to.equal(409);
+      expect(res.body).to.have.property(
+
+        "message",
+        "An account with that email already exists.",
+      );
+
+    });
+
   });
 
   describe("PUT /api/settings/password", () => {
@@ -152,6 +179,27 @@ describe("Settings API", () => {
         "previousPassword is incorrect.",
       );
     });
+
+    it("returns 400 when newPassword is too short", async () =>{
+
+      const res = await request(app)
+        .put("/api/settings/password")
+        .set("Authorization", `Bearer ${token}`)
+        .send({
+
+          previousPassword: "password123",
+          newPassword: "abcd",
+        });
+
+      expect(res.status).to.equal(400);
+      expect(res.body).to.have.property(
+
+        "message",
+        "Password must be at least 6 characters long.",
+      );
+
+    });
+
   });
 
   describe("PUT /api/settings/preferences", () => {
